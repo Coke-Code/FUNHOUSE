@@ -1,28 +1,19 @@
-# electronframework
+# Sample code for Node.js
 
-> electron版framework
+This sample is written for [Node.js](http://nodejs.org/) and requires [Express](http://expressjs.com/) to make the sample code cleaner.
 
-#### Build Setup
+To install and run:
 
-``` bash
-# install dependencies
-npm install
+    cd samples/Node.js
+    npm install
+    node app.js
 
-# serve with hot reload at localhost:9080
-npm run dev
+Then browse to [localhost:3000](http://localhost:3000).
 
-# build electron application for production
-npm run build
+File chunks will be uploaded to samples/Node.js/tmp directory.
 
-# run unit & end-to-end tests
-npm test
+## Enabling Cross-domain Uploads
 
+If you would like to load the Uploader.js library from one domain and have your Node.js reside on another, you must allow 'Access-Control-Allow-Origin' from '*'.  Please remember, there are some potential security risks with enabling this functionality.  If you would still like to implement cross-domain uploads, open app.js and uncomment lines 24-31 and uncomment line 17.
 
-# lint all JS/Vue component files in `src/`
-npm run lint
-
-```
-
----
-
-This project was generated with [electron-vue](https://github.com/SimulatedGREG/electron-vue)@[45a3e22](https://github.com/SimulatedGREG/electron-vue/tree/45a3e224e7bb8fc71909021ccfdcfec0f461f634) using [vue-cli](https://github.com/vuejs/vue-cli). Documentation about the original structure can be found [here](https://simulatedgreg.gitbooks.io/electron-vue/content/index.html).
+Then in public/index.html, on line 49, update the target with your server's address.  For example: target:'http://www.example.com/upload'
