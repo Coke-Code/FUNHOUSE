@@ -4,6 +4,9 @@ var fs = require('fs'),
   Stream = require('stream').Stream;
 module.exports = flow = function(temporaryFolder) {
   var $ = this;
+  console.log('2222222222222222222222222222222222222222222222222222222222222222222')
+  console.log(temporaryFolder)
+  console.log('2222222222222222222222222222222222222222222222222222222222222222222')
   $.temporaryFolder = temporaryFolder;
   $.maxFileSize = null;
   $.fileParameterName = 'file';
@@ -13,11 +16,18 @@ module.exports = flow = function(temporaryFolder) {
   function cleanIdentifier(identifier) {
     return identifier.replace(/[^0-9A-Za-z_-]/g, '');
   }
+  function cleanIdentifierEx(identifier) {
+    return identifier.replace(/[^0-9]/g, '');
+  }
   function getChunkFilename(chunkNumber, identifier) {
     // Clean up the identifier
     identifier = cleanIdentifier(identifier);
     // What would the file name be?
     return path.resolve($.temporaryFolder, './uploader-' + identifier + '.' + chunkNumber);
+  }
+  function getLocalFilename(filename, identifier) {
+    identifier = cleanIdentifierEx(identifier);
+    return path.resolve($.temporaryFolder, './' + identifier + '-' + path.basename(filename));
   }
   function validateRequest(chunkNumber, chunkSize, totalSize, identifier, filename, fileSize) {
     // Clean up the identifier
@@ -58,8 +68,10 @@ module.exports = flow = function(temporaryFolder) {
     var totalSize = req.query.totalSize;
     var identifier = req.query.identifier;
     var filename = req.query.filename;
+    var file = req.query.binary
     if (validateRequest(chunkNumber, chunkSize, totalSize, identifier, filename) == 'valid') {
       var chunkFilename = getChunkFilename(chunkNumber, identifier);
+      var localFilename = getLocalFilename(filename,identifier)
       fs.exists(chunkFilename, function(exists) {
         if (exists) {
           callback('found', chunkFilename, filename, identifier);
@@ -76,6 +88,7 @@ module.exports = flow = function(temporaryFolder) {
   //'invalid_uploader_request', null, null, null
   //'non_uploader_request', null, null, null
   $.post = function(req, callback) {
+    
     var fields = req.body;
     var files = req.files;
     var chunkNumber = fields['chunkNumber'];
@@ -83,6 +96,7 @@ module.exports = flow = function(temporaryFolder) {
     var totalSize = fields['totalSize'];
     var identifier = cleanIdentifier(fields['identifier']);
     var filename = fields['filename'];
+    // console.log(req)
     if (!files[$.fileParameterName] || !files[$.fileParameterName].size) {
       callback('invalid_uploader_request', null, null, null);
       return;
@@ -162,7 +176,7 @@ module.exports = flow = function(temporaryFolder) {
       //console.log('removing pipeChunkRm ', number, 'chunkFilename', chunkFilename);
       fs.exists(chunkFilename, function(exists) {
         if (exists) {
-          console.log('exist removing ', chunkFilename);
+          // console.log('exist removing ', chunkFilename);
           fs.unlink(chunkFilename, function(err) {
             if (err && options.onError) options.onError(err);
           });
