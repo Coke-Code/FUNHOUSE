@@ -63,11 +63,11 @@ module.exports = flow = function(temporaryFolder) {
   //'found', filename, original_filename, identifier
   //'not_found', null, null, null
   $.get = function(req, callback) {
-    var chunkNumber = req.param('chunkNumber', 0);
-    var chunkSize = req.param('chunkSize', 0);
-    var totalSize = req.param('totalSize', 0);
-    var identifier = req.param('identifier', "");
-    var filename = req.param('filename', "");
+    var chunkNumber = req.query.chunkNumber;
+    var chunkSize = req.query.chunkSize;
+    var totalSize = req.query.totalSize;
+    var identifier = req.query.identifier;
+    var filename = req.query.filename;
 
     if (validateRequest(chunkNumber, chunkSize, totalSize, identifier, filename) == 'valid') {
       var chunkFilename = getChunkFilename(chunkNumber, identifier);
