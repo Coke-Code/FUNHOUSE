@@ -39,11 +39,10 @@ app.post('/upload', multipartMiddleware, function(req, res) {
 // Handle status checks on chunks through Uploader.js
 app.get('/upload', function(req, res) {
   uploader.get(req, function(status, filename, original_filename, identifier) {
-    console.log('GET', status);
+    // console.log('GET', status);
     if (ACCESS_CONTROLL_ALLOW_ORIGIN) {
       res.header("Access-Control-Allow-Origin", "*");
     }
-
     res.status(status == 'found' ? 200 : 204).send(status);
   });
 });
@@ -52,4 +51,4 @@ app.get('/download/:identifier', function(req, res) {
   uploader.write(req.params.identifier, res);
 });
 
-app.listen(3000);
+app.listen(34565);

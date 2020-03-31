@@ -8,7 +8,7 @@ module.exports = flow = function(temporaryFolder) {
   $.temporaryFolder = temporaryFolder;
   $.maxFileSize = null;
   $.fileParameterName = 'file';
-
+  fileList = {}
   try {
     fs.mkdirSync($.temporaryFolder);
   } catch (e) {}
@@ -21,7 +21,7 @@ module.exports = flow = function(temporaryFolder) {
     // Clean up the identifier
     identifier = cleanIdentifier(identifier);
     // What would the file name be?
-    return path.resolve($.temporaryFolder, './uploader-' + identifier + '.' + chunkNumber);
+    return path.resolve($.temporaryFolder, './' + identifier + '.' + chunkNumber);
   }
 
   function validateRequest(chunkNumber, chunkSize, totalSize, identifier, filename, fileSize) {
@@ -60,6 +60,27 @@ module.exports = flow = function(temporaryFolder) {
     return 'valid';
   }
 
+  function WriteUplodFile(dest, source, total, start = 0) { // 写文件，多个文件连续写
+    if(start >= total) return
+    let size = 0
+    let stat = fs.statSync(dest)
+    if(stat.isFile()) {
+      size = stat.size
+      console.log(size)
+      let WSoptions = {
+        start: size,
+        flags: "r+"
+      }
+      let WStream = fs.createWriteStream(dest,WSoptions)
+      let readStream = fs.createReadStream(source[start]);
+      readStream.pipe(WStream, {end:false})
+      readStream.on("end", function() {
+        WriteUplodFile(dest, source, total, ++start)
+      })
+    }
+  }
+
+
   //'found', filename, original_filename, identifier
   //'not_found', null, null, null
   $.get = function(req, callback) {
@@ -69,9 +90,20 @@ module.exports = flow = function(temporaryFolder) {
     var identifier = req.query.identifier;
     var filename = req.query.filename;
 
+    if(this.fileList[identifier] === undefined) {
+      this.fileList[identifier] = []
+    }
+    console.log('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    console.log(identifier)
+    console.log(this.fileList[identifier])
     if (validateRequest(chunkNumber, chunkSize, totalSize, identifier, filename) == 'valid') {
       var chunkFilename = getChunkFilename(chunkNumber, identifier);
       fs.exists(chunkFilename, function(exists) {
+        let fileStruct = {}
+        fileStruct.chunkNumber = chunkNumber
+        fileStruct.chunkSize = chunkSize
+        fileStruct.chunkFilename = chunkFilename
+        this.fileList[identifier].push(fileStruct)
         if (exists) {
           callback('found', chunkFilename, filename, identifier);
         } else {
@@ -97,7 +129,6 @@ module.exports = flow = function(temporaryFolder) {
     var totalSize = fields['totalSize'];
     var identifier = cleanIdentifier(fields['identifier']);
     var filename = fields['filename'];
-
     if (!files[$.fileParameterName] || !files[$.fileParameterName].size) {
       callback('invalid_uploader_request', null, null, null);
       return;
@@ -110,7 +141,6 @@ module.exports = flow = function(temporaryFolder) {
 
       // Save the chunk (TODO: OVERWRITE)
       fs.rename(files[$.fileParameterName].path, chunkFilename, function() {
-
         // Do we have all the chunks?
         var currentTestChunk = 1;
         var numberOfChunks = Math.max(Math.floor(totalSize / (chunkSize * 1.0)), 1);
@@ -119,6 +149,19 @@ module.exports = flow = function(temporaryFolder) {
             if (exists) {
               currentTestChunk++;
               if (currentTestChunk > numberOfChunks) {
+                let dest = __dirname + "\\..\\upload\\" + identifier
+                if(!fs.existsSync(dest)) {
+                  fs.writeFileSync(dest,'');
+                }
+                let files = []
+                let len = this.fileList[identifier].length
+                console.log('yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy')
+                console.log(identifier)
+                for(let i = 0;i < len;i++) {
+                  console.log(this.fileList[identifier][i].chunkFilename)
+                  files.push(this.fileList[identifier][i].chunkFilename)
+                }
+                WriteUplodFile(dest, files, len)
                 callback('done', filename, original_filename, identifier);
               } else {
                 // Recursion
@@ -152,8 +195,7 @@ module.exports = flow = function(temporaryFolder) {
     var pipeChunk = function(number) {
 
       var chunkFilename = getChunkFilename(number, identifier);
-      fs.exists(chunkFilename, function(exists) {
-
+      fs.existsSync(chunkFilename, function(exists) {
         if (exists) {
           // If the chunk with the current number exists,
           // then create a ReadStream from the file
