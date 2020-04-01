@@ -66,7 +66,7 @@ module.exports = flow = function(temporaryFolder) {
     let stat = fs.statSync(dest)
     if(stat.isFile()) {
       size = stat.size
-      console.log(size)
+      // console.log(size)
       let WSoptions = {
         start: size,
         flags: "r+"
@@ -93,17 +93,26 @@ module.exports = flow = function(temporaryFolder) {
     if(this.fileList[identifier] === undefined) {
       this.fileList[identifier] = []
     }
-    console.log('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
-    console.log(identifier)
-    console.log(this.fileList[identifier])
     if (validateRequest(chunkNumber, chunkSize, totalSize, identifier, filename) == 'valid') {
       var chunkFilename = getChunkFilename(chunkNumber, identifier);
       fs.exists(chunkFilename, function(exists) {
-        let fileStruct = {}
-        fileStruct.chunkNumber = chunkNumber
-        fileStruct.chunkSize = chunkSize
-        fileStruct.chunkFilename = chunkFilename
-        this.fileList[identifier].push(fileStruct)
+        if(!fs.existsSync(__dirname + "\\..\\upload\\" + identifier)){
+          let fileStruct = {}
+          fileStruct.chunkNumber = chunkNumber
+          fileStruct.chunkSize = chunkSize
+          fileStruct.chunkFilename = chunkFilename
+          let find = false
+          let len = this.fileList[identifier].length
+          for(let i = 0;i < len;i++){
+            if(this.fileList[identifier][i].chunkFilename === chunkFilename){
+              find = true
+              break
+            }
+          }
+          if(!find) {
+            this.fileList[identifier].push(fileStruct)
+          }
+        }
         if (exists) {
           callback('found', chunkFilename, filename, identifier);
         } else {
@@ -153,10 +162,26 @@ module.exports = flow = function(temporaryFolder) {
                 if(!fs.existsSync(dest)) {
                   fs.writeFileSync(dest,'');
                 }
-                let files = []
                 let len = this.fileList[identifier].length
-                console.log('yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy')
-                console.log(identifier)
+                let strChunkFilename = ''
+                let otherChunkFilename = ''
+                //我们做文件序号的排序，可能存在文件位置错乱的情况
+                for(let i = 0;i < len;i++) {
+                  strChunkFilename = getChunkFilename(i+1, identifier)
+                  if(this.fileList[identifier][i].chunkFilename !== strChunkFilename) { //文件序号错乱
+                    for (let j = i + 1; j < len; j++) {
+                      otherChunkFilename = this.fileList[identifier][j].chunkFilename
+                      if(strChunkFilename === otherChunkFilename) { //找到对应的,进行数据交换
+                        let tmp = this.fileList[identifier][j]
+                        this.fileList[identifier][j] = this.fileList[identifier][i]
+                        this.fileList[identifier][i] = tmp
+                        break
+                      }
+                    }
+                  }
+                }
+                let files = []
+                console.log(len)
                 for(let i = 0;i < len;i++) {
                   console.log(this.fileList[identifier][i].chunkFilename)
                   files.push(this.fileList[identifier][i].chunkFilename)
@@ -231,7 +256,7 @@ module.exports = flow = function(temporaryFolder) {
       fs.exists(chunkFilename, function(exists) {
         if (exists) {
 
-          console.log('exist removing ', chunkFilename);
+          // console.log('exist removing ', chunkFilename);
           fs.unlink(chunkFilename, function(err) {
             if (err && options.onError) options.onError(err);
           });
