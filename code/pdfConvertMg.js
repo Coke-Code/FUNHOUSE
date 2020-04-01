@@ -8,12 +8,12 @@ var exec = require('child_process').execFile;
 
 var userFileCacheDirName = 'UserFileCacheDir';
 
-  var kInit = '0';
-  var kGetPageCount = '1';
-  var kStartConvert = '2';
-  var kHeartBeat = '3';
-  var kGetFileUrl = '4';
-  var kUploadFile = '5';
+  var kInit = 0;
+  var kGetPageCount = 1;
+  var kStartConvert = 2;
+  var kHeartBeat = 3;
+  var kGetFileUrl = 4;
+  var kUploadFile = 5;
 
 module.exports = xx = function() {
     var $ = this;
@@ -131,26 +131,54 @@ module.exports = xx = function() {
                     break;
                 case kGetPageCount:
                     //userFileCacheDir/md5/md5.pdf
-                    var cmdGetPageCount = ['C:/PDFConvert/tool/2.pdf'];
-                    ExcuteCmd(cmdGetPageCount,function(pageNum){
-                        var resJON = {'MsgType':kGetPageCount,'ErrorCode':0,'PageCount':pageNum};
-                        callback(resJson);
-                    });
+                    var fileMD5 = jsonTxt['FileMD5']
+                    if( fileMD5 != undefined )
+                    {
+                        var fileNameWithExt = fileMD5 + '.PDF';
+                        var filePath = path.join(__dirname,'../',userFileCacheDirName,fileMD5,fileNameWithExt);
+                        var filePwd = jsonTxt['Pwd'];
+                        var cmdGetPageCount = [filePath];
+                        if(filePwd != undefined)
+                        {
+                            cmdGetPageCount = [filePath,filePwd];
+                        }
+                        ExcuteCmd(cmdGetPageCount,function(pageNum){
+                            var resJON = {'MsgType':kGetPageCount,'ErrorCode':0,'PageCount':Number(pageNum)};
+                            console.log(resJON);
+                            var strJson = JSON.stringify(resJON);
+                            console.log(strJson);
+                            callback("ok",strJson);
+                        });
+                    }
+                    else
+                    {
+                        callback('invalid_req_param',JSON.stringify({'MsgType':kGetPageCount,'ErrorCode':-1,'PageCount':-3}));
+                    }
                     break;
                 case kStartConvert:
-                    /// 计算md5(pdf路径+pHuDdunf+{年月日})
-                    /// 获取转换类型字符串
-                    /// pdf路径 
-                    /// 转换结果输出目录
-                    /// 转换过程ini文件，其记录了进度
-                    /// 转换页数范围
-                    /// 目标文件后缀，通过ToFileType获取
-                    /// 原文件密码
-                    var cmdJSON = ['ecbf0e75ccbf13490b84bc6d92bd63dc', 'file2word', 'C:/PDFConvert/tool/2.pdf', 'C:/PDFConvert/tool/output', 'C:/PDFConvert/tool/Config/0330doc.ini', '1-9999', 'doc'];
-                    ExcuteCmd(cmdJSON,function(pageNum){
-                        var resJON = {'MsgType':kStartConvert,'ErrorCode':0};
-                        callback(resJson);
-                    });
+                    var fileMD5 = jsonTxt['FileMD5']
+                    if( fileMD5 != undefined )
+                    {
+                        /// 计算md5(pdf路径+pHuDdunf+{年月日})
+                        var fileNameWithExt = fileMD5 + '.PDF';
+                        var filePath = path.join(__dirname,'../',userFileCacheDirName,fileMD5,fileNameWithExt);
+                        /// 获取转换类型字符串
+                        /// pdf路径 
+                        /// 转换结果输出目录
+                        /// 转换过程ini文件，其记录了进度
+                        /// 转换页数范围
+                        /// 目标文件后缀，通过ToFileType获取
+                        /// 原文件密码
+                        var cmdJSON = ['e5efc4c8062a7f86d3fbfa6773ca4f7f', 'file2word', 'C:/PDFConvert/tool/2.pdf', 'C:/PDFConvert/tool/output', 'C:/PDFConvert/tool/Config/0330doc.ini', '1-9999', 'doc'];
+                        ExcuteCmd(cmdJSON,function(pageNum){
+                            var resJON = {'MsgType':kStartConvert,'ErrorCode':0};
+                            callback(resJson);
+                        });
+                    }
+                    else
+                    {
+                        callback('invalid_req_param',JSON.stringify({'MsgType':kStartConvert,'ErrorCode':-1}));
+                    }
                     break;
                 case kHeartBeat:
                     /// 读取MD5的文件相应的ini解析其中progress并返回给客户端
