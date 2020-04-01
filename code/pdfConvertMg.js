@@ -5,6 +5,10 @@ var fs = require('fs'),
 
 var querystring = require('querystring');
 var exec = require('child_process').execFile;
+var crypto = require('crypto');
+var sd = require('silly-datetime');
+
+var loadiniY = require('./iniParse')
 
 var userFileCacheDirName = 'UserFileCacheDir';
 
@@ -15,30 +19,14 @@ var userFileCacheDirName = 'UserFileCacheDir';
   var kGetFileUrl = 4;
   var kUploadFile = 5;
 
+  const gStrXunJie = 'pHuDdunf';
+
 module.exports = xx = function() {
     var $ = this;
 
-    function loadIni(filename) {
-        var r = [],
-            q = require("querystring"),
-            f = require("fs").readFileSync(filename, "ascii"),
-            v = q.parse(f, '[', ']'),
-            t;
-        for (var i in v) {
-            if (i != '' && v[i] != '') {
-                r[i] = [];
-                t = q.parse(v[i], '\n', '=');
-                for (var j in t) {
-                    if (j != '' && t[j] != '')
-                        r[i][j] = t[j];
-                }
-            }
-        }
-        return r;
-    };
-
     const iopath = path.join(__dirname, '../tool/Config/0330doc.ini'); 
-    var Info = loadIni(iopath)['progress'];
+    var loadXX = new loadiniY(iopath);
+    var Info = loadXX['progress'];
     var prg = Info['progress'];
     console.log(prg);
 
@@ -83,6 +71,23 @@ module.exports = xx = function() {
         }
         
         return 'OK';
+    }
+
+    function GetPathMD5(fileMD5)
+    {
+        var fileNameWithExt = fileMD5 + '.PDF';
+        var filePath = path.join(__dirname,'../',userFileCacheDirName,fileMD5,fileNameWithExt);
+        var time = sd.format(new Date(), 'YYYYMMDD');
+        var combineStr = filePath + gStrXunJie + time;
+        var m = crypto.createHash('md5');
+        m.update(combineStr, 'utf8');
+        var pathMD5 = m.digest('hex');
+        return pathMD5;
+    }
+
+    function GetTaskType(fromFileType,toFileType)
+    {
+        
     }
 
     $.Init = function(req, callback) {
@@ -160,8 +165,8 @@ module.exports = xx = function() {
                     if( fileMD5 != undefined )
                     {
                         /// 计算md5(pdf路径+pHuDdunf+{年月日})
-                        var fileNameWithExt = fileMD5 + '.PDF';
-                        var filePath = path.join(__dirname,'../',userFileCacheDirName,fileMD5,fileNameWithExt);
+                        var pathMD5 = GetPathMD5(FileMD5);
+
                         /// 获取转换类型字符串
                         /// pdf路径 
                         /// 转换结果输出目录
@@ -169,10 +174,10 @@ module.exports = xx = function() {
                         /// 转换页数范围
                         /// 目标文件后缀，通过ToFileType获取
                         /// 原文件密码
-                        var cmdJSON = ['e5efc4c8062a7f86d3fbfa6773ca4f7f', 'file2word', 'C:/PDFConvert/tool/2.pdf', 'C:/PDFConvert/tool/output', 'C:/PDFConvert/tool/Config/0330doc.ini', '1-9999', 'doc'];
-                        ExcuteCmd(cmdJSON,function(pageNum){
+                        var cmdJSON = [pathMD5, 'file2img', 'C:/PDFConvert/tool/2.pdf', 'C:/PDFConvert/tool/output', 'C:/PDFConvert/tool/Config/0330doc.ini', '1-9999', 'gif'];
+                        ExcuteCmd(cmdJSON,function(err){
                             var resJON = {'MsgType':kStartConvert,'ErrorCode':0};
-                            callback(resJson);
+                            callback(JSON.stringify(resJON));
                         });
                     }
                     else
