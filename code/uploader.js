@@ -3,21 +3,22 @@ var fs = require('fs'),
   util = require('util'),
   Stream = require('stream').Stream;
 
-module.exports = flow = function(temporaryFolder) {
+module.exports = flow = function(uploadtmpdir,uploadmd5path) {
   var $ = this;
-  $.temporaryFolder = temporaryFolder;
-  $.uploadDir = __dirname + '\\..\\' +  $.temporaryFolder + '\\'
+  $.uploadtmpdir = uploadtmpdir;
+  $.uploadmd5dir = uploadmd5path
+  $.md5Dir = __dirname + '\\..\\' +  $.uploadmd5dir + '\\'
+  $.tmpDir = __dirname + '\\..\\' +  $.uploadtmpdir + '\\'
   $.maxFileSize = null;
   $.fileParameterName = 'file';
   $.fileList = {}
   try {
-    console.log($.temporaryFolder)
-    mkdirsSync($.temporaryFolder)
+    mkdirsSync($.uploadtmpdir)
+    mkdirsSync($.uploadmd5dir)
   } catch (e) {}
 
   // 递归创建目录 同步方法
   function mkdirsSync(dirname) {
-    console.log(dirname)
     if (fs.existsSync(dirname)) {
       return true;
     } else {
@@ -37,7 +38,7 @@ module.exports = flow = function(temporaryFolder) {
     // Clean up the identifier
     identifier = cleanIdentifier(identifier);
     // What would the file name be?
-    return path.resolve($.temporaryFolder, './' + identifier + '.' + chunkNumber);
+    return path.resolve($.tmpDir, './' + identifier + '.' + chunkNumber);
   }
 
   function validateRequest(chunkNumber, chunkSize, totalSize, identifier, filename, fileSize) {
@@ -175,8 +176,10 @@ module.exports = flow = function(temporaryFolder) {
             if (exists) {
               currentTestChunk++;
               if (currentTestChunk > numberOfChunks) {
-                let dest = $.uploadDir + identifier + ".PDF"
-                console.log(dest)
+                let destDir = $.md5Dir + '\\' + identifier
+                fs.mkdirSync(destDir)
+                let dest = destDir + '\\' + identifier + ".PDF"
+                // console.log(dest)
                 if(!fs.existsSync(dest)) {
                   fs.writeFileSync(dest,'');
                 }
@@ -199,9 +202,7 @@ module.exports = flow = function(temporaryFolder) {
                   }
                 }
                 let files = []
-                console.log(len)
                 for(let i = 0;i < len;i++) {
-                  console.log(this.fileList[identifier].uploadPieces[i].chunkFilename)
                   files.push(this.fileList[identifier].uploadPieces[i].chunkFilename)
                 }
                 WriteUplodFile(dest, files, len)
