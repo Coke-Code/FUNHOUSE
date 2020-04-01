@@ -1,5 +1,5 @@
 .DS_Store
-ClientInterface/PDFConvert/MD5/*
+UserFileCacheDir/*
 dist/electron/*
 dist/web/*
 build/*

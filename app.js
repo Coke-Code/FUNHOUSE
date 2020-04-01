@@ -3,7 +3,7 @@
 var express = require('express');
 var multipart = require('connect-multiparty');
 var multipartMiddleware = multipart();
-var uploader = require('./code/uploader.js')('ClientInterface\\PDFConvert\\MD5');
+var uploader = require('./code/uploader.js')('UserFileCacheDir');
 var pdfConvertMgr = require('./code/pdfConvertMg.js')();
 var app = express();
 
