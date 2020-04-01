@@ -6,12 +6,28 @@ var fs = require('fs'),
 module.exports = flow = function(temporaryFolder) {
   var $ = this;
   $.temporaryFolder = temporaryFolder;
+  $.uploadDir = __dirname + '\\..\\' +  $.temporaryFolder + '\\'
   $.maxFileSize = null;
   $.fileParameterName = 'file';
   $.fileList = {}
   try {
-    fs.mkdirSync($.temporaryFolder);
+    console.log($.temporaryFolder)
+    mkdirsSync($.temporaryFolder)
   } catch (e) {}
+
+  // 递归创建目录 同步方法
+  function mkdirsSync(dirname) {
+    console.log(dirname)
+    if (fs.existsSync(dirname)) {
+      return true;
+    } else {
+      if (mkdirsSync(path.dirname(dirname))) {
+        fs.mkdirSync(dirname);
+        return true;
+      }
+    }
+  }
+
 
   function cleanIdentifier(identifier) {
     return identifier.replace(/[^0-9A-Za-z_-]/g, '');
@@ -97,7 +113,7 @@ module.exports = flow = function(temporaryFolder) {
     if (validateRequest(chunkNumber, chunkSize, totalSize, identifier, filename) == 'valid') {
       var chunkFilename = getChunkFilename(chunkNumber, identifier);
       fs.exists(chunkFilename, function(exists) {
-        if(!fs.existsSync(__dirname + "\\..\\upload\\" + identifier)){
+        if(!fs.existsSync($.uploadDir + identifier + ".PDF")){
           let fileStruct = {}
           fileStruct.chunkNumber = chunkNumber
           fileStruct.chunkSize = chunkSize
@@ -159,7 +175,8 @@ module.exports = flow = function(temporaryFolder) {
             if (exists) {
               currentTestChunk++;
               if (currentTestChunk > numberOfChunks) {
-                let dest = __dirname + "\\..\\upload\\" + identifier
+                let dest = $.uploadDir + identifier + ".PDF"
+                console.log(dest)
                 if(!fs.existsSync(dest)) {
                   fs.writeFileSync(dest,'');
                 }

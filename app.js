@@ -1,9 +1,9 @@
-process.env.TMPDIR = 'upload'; // to avoid the EXDEV rename error, see http://stackoverflow.com/q/21071303/76173
+//process.env.TMPDIR = 'upload'; // to avoid the EXDEV rename error, see http://stackoverflow.com/q/21071303/76173
 
 var express = require('express');
 var multipart = require('connect-multiparty');
 var multipartMiddleware = multipart();
-var uploader = require('./code/uploader.js')('upload');
+var uploader = require('./code/uploader.js')('ClientInterface\\PDFConvert\\MD5');
 var app = express();
 
 // Configure access control allow origin header stuff

@@ -1,5 +1,5 @@
 .DS_Store
-upload/*
+ClientInterface/PDFConvert/MD5/*
 dist/electron/*
 dist/web/*
 build/*
