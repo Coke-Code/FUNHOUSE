@@ -32,12 +32,12 @@ app.post('/IMyFoneGateway/PDFConvert', function(req, res){
   var bodyR = req.body;
   console.log(bodyR);
   var str = pdfConvertMgr.Init(req, function(err,resStr){
-    console.log(resStr);
+     console.log(resStr);
     //setTimeout(function (str) {
       res.status(200).send(resStr);
     //}, 500);
   });
-  res.status(200).json({MsgType:1,ErrorCode:0,PageCount:-1})
+  //res.status(200).json({MsgType:1,ErrorCode:0,PageCount:-1})
   // console.log('index post');
   // var bodyR = req.body;
   // console.log(bodyR);

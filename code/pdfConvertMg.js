@@ -9,27 +9,13 @@ var crypto = require('crypto');
 var sd = require('silly-datetime');
 
 var loadiniY = require('./iniParse')
+var comStr = require('./commomStr')
 
-var userFileCacheDirName = 'UserFileCacheDir';
+var userFileCacheDirName = comStr.UserCacheDirName;
 
-  var kInit = 0;
-  var kGetPageCount = 1;
-  var kStartConvert = 2;
-  var kHeartBeat = 3;
-  var kGetFileUrl = 4;
-  var kUploadFile = 5;
-
-  const gStrXunJie = 'pHuDdunf';
 
 module.exports = xx = function() {
     var $ = this;
-
-    const iopath = path.join(__dirname, '../tool/Config/0330doc.ini'); 
-    var loadXX = new loadiniY(iopath);
-    var Info = loadXX['progress'];
-    var prg = Info['progress'];
-    console.log(prg);
-
     var pdfConsoleExe = path.resolve(__dirname,'../tool/PDFConsole.exe');
     console.log(pdfConsoleExe);
 
@@ -40,9 +26,12 @@ module.exports = xx = function() {
     function ExcuteCmd(cmdJson,callback){
         console.log("fun() start");
         exec(pdfConsoleExe,cmdJson, function(err, data) {
-              console.log(err)
-              console.log(data.toString()); 
-              callback(data.toString());                      
+            if (err) {
+                callback(err);
+            } else {
+                console.log(err)
+                console.log(data.toString()); 
+            }                     
           });
     }
 
@@ -78,15 +67,97 @@ module.exports = xx = function() {
         var fileNameWithExt = fileMD5 + '.PDF';
         var filePath = path.join(__dirname,'../',userFileCacheDirName,fileMD5,fileNameWithExt);
         var time = sd.format(new Date(), 'YYYYMMDD');
-        var combineStr = filePath + gStrXunJie + time;
+        var combineStr = filePath + comStr.StrXunJie + time;
         var m = crypto.createHash('md5');
         m.update(combineStr, 'utf8');
         var pathMD5 = m.digest('hex');
         return pathMD5;
     }
 
-    function GetTaskType(fromFileType,toFileType)
+    function GetTaskType(fromType,toType)
     {
+        if (fromType == comStr.FileType.kPDF)
+        {
+            if (toType == comStr.FileType.kDoc || toType == comStr.FileType.kDocx)
+            {
+                return "file2word";
+            }
+    
+            if (toType == comStr.FileType.kXls || toType == comStr.FileType.kXlsx)
+            {
+                return "file2excel";
+            }
+    
+            if (toType == comStr.FileType.kPpt || toType == comStr.FileType.kPptx)
+            {
+                return "file2ppt";
+            }
+    
+            if (toType == comStr.FileType.kPng || toType == comStr.FileType.kJpg || 
+                toType == comStr.FileType.kBmp || toType == comStr.FileType.kTif ||
+                toType == comStr.FileType.kgif)
+            {
+                return "file2img";
+            }
+    
+            if (toType ==comStr.FileType.kXls || toType == comStr.FileType.kXlsx)
+            {
+                return "file2html";
+            }
+    
+            if (toType == comStr.FileType.kTxt)
+            {
+                return "file2txt";
+            }
+        }
+    
+        if (toType == comStr.FileType.kPDF)
+        {
+            if (fromType == comStr.FileType.kPng || fromType == comStr.FileType.kJpg ||
+                fromType == comStr.FileType.kBmp || fromType == comStr.FileType.kTif ||
+                fromType == comStr.FileType.kgif)
+            {
+                return "img2pdf";
+            }
+    
+            return "file2pdf";
+        }
+    
+        return "file2word";
+    }
+
+    function GetFileExt(FileType)
+    {
+        if (FileType == comStr.FileType.kPDF) {
+            return comStr.FileTypeStr.kPDF;
+        } 
+        else if (FileType == comStr.FileType.kDoc) {
+            return comStr.FileTypeStr.kDoc;
+        }
+        else if (FileType == comStr.FileType.kDocx) {
+            return comStr.FileTypeStr.kDocx;
+        }
+
+        return comStr.FileTypeStr.kPDF;
+    }
+
+    function GetProgress(iniPath)
+    {
+        var loadXX = new loadiniY(iniPath);
+        var Info = loadXX['progress'];
+        var prg = Info['progress'];
+        console.log(prg);
+        return prg;
+            // const iopath = path.join(__dirname, '../tool/Config/0330doc.ini');
+        // fs.exists(iniPath,function(exist){
+        //     if (exist) {
+                
+        //     }
+        //     else
+        //     {
+        //         return 0;
+        //     }
+        // });
         
     }
 
@@ -121,7 +192,7 @@ module.exports = xx = function() {
             var msgType = jsonTxt['MsgType'];
             switch(msgType)
             {
-                case kInit:
+                case comStr.MsgType.kInit:
                     var res = Init(jsonTxt);
                     if(res == 'OK')
                     {
@@ -134,7 +205,7 @@ module.exports = xx = function() {
                         callback(resJson);
                     }
                     break;
-                case kGetPageCount:
+                case comStr.MsgType.kGetPageCount:
                     //userFileCacheDir/md5/md5.pdf
                     var fileMD5 = jsonTxt['FileMD5']
                     if( fileMD5 != undefined )
@@ -148,7 +219,7 @@ module.exports = xx = function() {
                             cmdGetPageCount = [filePath,filePwd];
                         }
                         ExcuteCmd(cmdGetPageCount,function(pageNum){
-                            var resJON = {'MsgType':kGetPageCount,'ErrorCode':0,'PageCount':Number(pageNum)};
+                            var resJON = {'MsgType':comStr.MsgType.kGetPageCount,'ErrorCode':0,'PageCount':Number(pageNum)};
                             console.log(resJON);
                             var strJson = JSON.stringify(resJON);
                             console.log(strJson);
@@ -157,36 +228,79 @@ module.exports = xx = function() {
                     }
                     else
                     {
-                        callback('invalid_req_param',JSON.stringify({'MsgType':kGetPageCount,'ErrorCode':-1,'PageCount':-3}));
+                        callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kGetPageCount,'ErrorCode':-1,'PageCount':-3}));
                     }
                     break;
-                case kStartConvert:
+                case comStr.MsgType.kStartConvert:
                     var fileMD5 = jsonTxt['FileMD5']
                     if( fileMD5 != undefined )
                     {
                         /// 计算md5(pdf路径+pHuDdunf+{年月日})
-                        var pathMD5 = GetPathMD5(FileMD5);
-
+                        var pathMD5 = GetPathMD5(fileMD5);
                         /// 获取转换类型字符串
+                        var taskType = GetTaskType(jsonTxt['FromFileType'],jsonTxt['ToFileType']);
                         /// pdf路径 
+                        var fileWorkPath = path.join(__dirname,'../',userFileCacheDirName,fileMD5);
+                        var fileNameWithExt = fileMD5 + GetFileExt(jsonTxt['FromFileType']);
+                        var srcFilePath = path.join(fileWorkPath,fileNameWithExt);
                         /// 转换结果输出目录
+                        var outputFilePath = path.join(fileWorkPath,"output");
                         /// 转换过程ini文件，其记录了进度
+                        var progFileName = fileMD5 + '_' + 'progress.ini';
+                        var progressIniPath = path.join(fileWorkPath,progFileName);
                         /// 转换页数范围
+                        var pageRange = jsonTxt['PageRange'];
                         /// 目标文件后缀，通过ToFileType获取
+                        var dstFileExt = GetFileExt(jsonTxt['ToFileType']);
                         /// 原文件密码
-                        var cmdJSON = [pathMD5, 'file2img', 'C:/PDFConvert/tool/2.pdf', 'C:/PDFConvert/tool/output', 'C:/PDFConvert/tool/Config/0330doc.ini', '1-9999', 'gif'];
+                        var filePwd = jsonTxt['Pwd'];
+                        var cmdJSON = [pathMD5, taskType, srcFilePath, outputFilePath, progressIniPath, pageRange==undefined?'':pageRange, dstFileExt,filePwd==undefined?'':filePwd];
+                        let hasErr = 0;
                         ExcuteCmd(cmdJSON,function(err){
-                            var resJON = {'MsgType':kStartConvert,'ErrorCode':0};
-                            callback(JSON.stringify(resJON));
+                            if(err != undefined){
+                                var resJON = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-1};
+                                callback("fail",JSON.stringify(resJON));
+                                hasErr = 1;
+                            }
                         });
+                        if (hasErr === 0) {
+                            var resTestJson = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':0};
+                            callback("ok",JSON.stringify(resTestJson));                            
+                        }
                     }
                     else
                     {
-                        callback('invalid_req_param',JSON.stringify({'MsgType':kStartConvert,'ErrorCode':-1}));
+                        callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-1}));
                     }
                     break;
-                case kHeartBeat:
+                case comStr.MsgType.kHeartBeat:
                     /// 读取MD5的文件相应的ini解析其中progress并返回给客户端
+                    var fileMD5 = jsonTxt['FileMD5'];
+                    if(fileMD5 != undefined)
+                    {
+//｛
+//     MsgType:HeartBeat
+//     FileMD5:xxx (字符串)   
+//     Progress：100（1-100）
+//     ConvertDone: 1 (数据 0 ，1表示完成)
+// ｝
+                        var fileWorkPath = path.join(__dirname,'../',userFileCacheDirName,fileMD5);
+                        var progFileName = fileMD5 + '_' + 'progress.ini';
+                        var progressIniPath = path.join(fileWorkPath,progFileName);
+                        var progress = GetProgress(progressIniPath);
+                        console.log(process);
+                        var convertDone = 0;
+                        if(process == '100')
+                        {
+                            convertDone = 1;
+                        }
+                        var resJson = {'MsgType':comStr.MsgType.kHeartBeat,'FileMD5':fileMD5,'Progress':Number(progress),'ConvertDone':convertDone};
+                        callback("ok",JSON.stringify(resJson));
+                    }
+                    else
+                    {
+                        callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kHeartBeat,'ErrorCode':-1}));
+                    }
                     break;
                 default:
                     break;                   
