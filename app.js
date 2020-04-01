@@ -3,7 +3,7 @@
 var express = require('express');
 var multipart = require('connect-multiparty');
 var multipartMiddleware = multipart();
-var uploader = require('./code/uploader.js')('UserFileCacheDir');
+var uploader = require('./code/uploader.js')('UserFileCacheDir/tmp','UserFileCacheDir');
 var pdfConvertMgr = require('./code/pdfConvertMg.js')();
 var app = express();
 
@@ -16,7 +16,7 @@ app.use(express.static(__dirname + '/public'));
 // Handle uploads through Uploader.js
 app.post('/upload', multipartMiddleware, function(req, res) {
   uploader.post(req, function(status, filename, original_filename, identifier) {
-    console.log('POST', status, original_filename, identifier);
+    // console.log('POST', status, original_filename, identifier);
     if (ACCESS_CONTROLL_ALLOW_ORIGIN) {
       res.header("Access-Control-Allow-Origin", "*");
       res.header("Access-Control-Allow-Headers", "content-type")
@@ -37,16 +37,27 @@ app.post('/IMyFoneGateway/PDFConvert', function(req, res){
       res.status(200).send(resStr);
     //}, 500);
   });
+  res.status(200).json({MsgType:1,ErrorCode:0,PageCount:-1})
+  // console.log('index post');
+  // var bodyR = req.body;
+  // console.log(bodyR);
+  // var str = pdfConvertMgr.Init(req, function(str){
+  //   setTimeout(function () {
+  //     res.status(200).send(str);
+  //   }, 500);
+  // });
   // res.status(200).send("hello world");
 });
 
 app.get('/IMyFoneGateway/PDFConvert', function(req, res){
-  console.log('index');
-  //console.log(pdfConvertMgr);
-  console.log(uploader);
-  debugger;
-  var str = pdfConvertMgr.TestLog('ooookkkk');
-  res.status(200).send("hello world");
+  //测试
+  res.status(200).json({MsgType:1,ErrorCode:0,PageCount:-1})
+  // console.log('index');
+  // //console.log(pdfConvertMgr);
+  // console.log(uploader);
+  // debugger;
+  // var str = pdfConvertMgr.TestLog('ooookkkk');
+  // res.status(200).send("hello world");
 });
 
 app.options('/upload', function(req, res){
