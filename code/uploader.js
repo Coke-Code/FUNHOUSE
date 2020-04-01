@@ -8,7 +8,7 @@ module.exports = flow = function(temporaryFolder) {
   $.temporaryFolder = temporaryFolder;
   $.maxFileSize = null;
   $.fileParameterName = 'file';
-  fileList = {}
+  $.fileList = {}
   try {
     fs.mkdirSync($.temporaryFolder);
   } catch (e) {}
@@ -91,7 +91,8 @@ module.exports = flow = function(temporaryFolder) {
     var filename = req.query.filename;
 
     if(this.fileList[identifier] === undefined) {
-      this.fileList[identifier] = []
+      this.fileList[identifier] = {}
+      this.fileList[identifier].uploadPieces = []
     }
     if (validateRequest(chunkNumber, chunkSize, totalSize, identifier, filename) == 'valid') {
       var chunkFilename = getChunkFilename(chunkNumber, identifier);
@@ -102,15 +103,15 @@ module.exports = flow = function(temporaryFolder) {
           fileStruct.chunkSize = chunkSize
           fileStruct.chunkFilename = chunkFilename
           let find = false
-          let len = this.fileList[identifier].length
+          let len = this.fileList[identifier].uploadPieces.length
           for(let i = 0;i < len;i++){
-            if(this.fileList[identifier][i].chunkFilename === chunkFilename){
+            if(this.fileList[identifier].uploadPieces[i].chunkFilename === chunkFilename){
               find = true
               break
             }
           }
           if(!find) {
-            this.fileList[identifier].push(fileStruct)
+            this.fileList[identifier].uploadPieces.push(fileStruct)
           }
         }
         if (exists) {
@@ -162,19 +163,19 @@ module.exports = flow = function(temporaryFolder) {
                 if(!fs.existsSync(dest)) {
                   fs.writeFileSync(dest,'');
                 }
-                let len = this.fileList[identifier].length
+                let len = this.fileList[identifier].uploadPieces.length
                 let strChunkFilename = ''
                 let otherChunkFilename = ''
                 //我们做文件序号的排序，可能存在文件位置错乱的情况
                 for(let i = 0;i < len;i++) {
                   strChunkFilename = getChunkFilename(i+1, identifier)
-                  if(this.fileList[identifier][i].chunkFilename !== strChunkFilename) { //文件序号错乱
+                  if(this.fileList[identifier].uploadPieces[i].chunkFilename !== strChunkFilename) { //文件序号错乱
                     for (let j = i + 1; j < len; j++) {
-                      otherChunkFilename = this.fileList[identifier][j].chunkFilename
+                      otherChunkFilename = this.fileList[identifier].uploadPieces[j].chunkFilename
                       if(strChunkFilename === otherChunkFilename) { //找到对应的,进行数据交换
-                        let tmp = this.fileList[identifier][j]
-                        this.fileList[identifier][j] = this.fileList[identifier][i]
-                        this.fileList[identifier][i] = tmp
+                        let tmp = this.fileList[identifier].uploadPieces[j]
+                        this.fileList[identifier].uploadPieces[j] = this.fileList[identifier].uploadPieces[i]
+                        this.fileList[identifier].uploadPieces[i] = tmp
                         break
                       }
                     }
@@ -183,8 +184,8 @@ module.exports = flow = function(temporaryFolder) {
                 let files = []
                 console.log(len)
                 for(let i = 0;i < len;i++) {
-                  console.log(this.fileList[identifier][i].chunkFilename)
-                  files.push(this.fileList[identifier][i].chunkFilename)
+                  console.log(this.fileList[identifier].uploadPieces[i].chunkFilename)
+                  files.push(this.fileList[identifier].uploadPieces[i].chunkFilename)
                 }
                 WriteUplodFile(dest, files, len)
                 callback('done', filename, original_filename, identifier);
