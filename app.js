@@ -4,6 +4,7 @@ var express = require('express');
 var multipart = require('connect-multiparty');
 var multipartMiddleware = multipart();
 var uploader = require('./uploader-node.js')('tmp');
+var pdfConvertMgr = require('./code/pdfConvertMg.js')();
 var app = express();
 
 // Configure access control allow origin header stuff
@@ -27,6 +28,26 @@ app.post('/upload', multipartMiddleware, function(req, res) {
   });
 });
 
+app.post('/IMyFoneGateway/PDFConvert', function(req, res){
+  console.log('index post');
+  var bodyR = req.body;
+  console.log(bodyR);
+  var str = pdfConvertMgr.Init(req, function(str){
+    setTimeout(function () {
+      res.status(200).send(str);
+    }, 500);
+  });
+  // res.status(200).send("hello world");
+});
+
+app.get('/IMyFoneGateway/PDFConvert', function(req, res){
+  console.log('index');
+  //console.log(pdfConvertMgr);
+  console.log(uploader);
+  debugger;
+  var str = pdfConvertMgr.TestLog('ooookkkk');
+  res.status(200).send("hello world");
+});
 
 app.options('/upload', function(req, res){
   console.log('OPTIONS');
@@ -53,4 +74,4 @@ app.get('/download/:identifier', function(req, res) {
   uploader.write(req.params.identifier, res);
 });
 
-app.listen(3000);
+app.listen(34565);
