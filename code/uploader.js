@@ -114,7 +114,7 @@ module.exports = flow = function(uploadtmpdir,uploadmd5path) {
     if (validateRequest(chunkNumber, chunkSize, totalSize, identifier, filename) == 'valid') {
       var chunkFilename = getChunkFilename(chunkNumber, identifier);
       fs.exists(chunkFilename, function(exists) {
-        if(!fs.existsSync($.uploadDir + identifier + ".PDF")){
+        if(!fs.existsSync($.md5Dir + identifier + '\\' + identifier + ".PDF")){
           let fileStruct = {}
           fileStruct.chunkNumber = chunkNumber
           fileStruct.chunkSize = chunkSize
@@ -176,11 +176,11 @@ module.exports = flow = function(uploadtmpdir,uploadmd5path) {
             if (exists) {
               currentTestChunk++;
               if (currentTestChunk > numberOfChunks) {
-                let destDir = $.md5Dir + '\\' + identifier
-                fs.mkdirSync(destDir)
+                let destDir = $.md5Dir + identifier
                 let dest = destDir + '\\' + identifier + ".PDF"
-                // console.log(dest)
+                console.log(dest)
                 if(!fs.existsSync(dest)) {
+                  fs.mkdirSync(destDir)
                   fs.writeFileSync(dest,'');
                 }
                 let len = this.fileList[identifier].uploadPieces.length
