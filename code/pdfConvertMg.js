@@ -8,7 +8,7 @@ var exec = require('child_process').execFile;
 var crypto = require('crypto');
 var sd = require('silly-datetime');
 
-var loadiniY = require('./iniParse')
+var loadini = require('./iniParse')
 var comStr = require('./commomStr')
 
 var userFileCacheDirName = comStr.UserCacheDirName;
@@ -26,12 +26,9 @@ module.exports = xx = function() {
     function ExcuteCmd(cmdJson,callback){
         console.log("fun() start");
         exec(pdfConsoleExe,cmdJson, function(err, data) {
-            if (err) {
-                callback(err);
-            } else {
-                console.log(err)
-                console.log(data.toString()); 
-            }                     
+            console.log(err)
+            console.log(data.toString()); 
+            callback(data.toString());               
           });
     }
 
@@ -143,22 +140,16 @@ module.exports = xx = function() {
 
     function GetProgress(iniPath)
     {
-        var loadXX = new loadiniY(iniPath);
-        var Info = loadXX['progress'];
-        var prg = Info['progress'];
-        console.log(prg);
-        return prg;
-            // const iopath = path.join(__dirname, '../tool/Config/0330doc.ini');
-        // fs.exists(iniPath,function(exist){
-        //     if (exist) {
-                
-        //     }
-        //     else
-        //     {
-        //         return 0;
-        //     }
-        // });
-        
+        try {
+            var loadObj = new loadini(iniPath);
+            var Info = loadObj['progress'];
+            var prg = Info['progress'];
+            console.log(prg);
+            return prg;            
+        } catch (error) {
+            console.log(error);
+            return 0;
+        }
     }
 
     $.Init = function(req, callback) {
@@ -214,7 +205,7 @@ module.exports = xx = function() {
                         var filePath = path.join(__dirname,'../',userFileCacheDirName,fileMD5,fileNameWithExt);
                         var filePwd = jsonTxt['Pwd'];
                         var cmdGetPageCount = [filePath];
-                        if(filePwd != undefined)
+                        if(  filePwd != null && filePwd != undefined && filePwd != "")
                         {
                             cmdGetPageCount = [filePath,filePwd];
                         }
@@ -257,10 +248,11 @@ module.exports = xx = function() {
                         var cmdJSON = [pathMD5, taskType, srcFilePath, outputFilePath, progressIniPath, pageRange==undefined?'':pageRange, dstFileExt,filePwd==undefined?'':filePwd];
                         let hasErr = 0;
                         ExcuteCmd(cmdJSON,function(err){
-                            if(err != undefined){
+                            if(err != undefined && err!=""){
                                 var resJON = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-1};
-                                callback("fail",JSON.stringify(resJON));
-                                hasErr = 1;
+                                console.log(resJON);
+                                //callback("fail",JSON.stringify(resJON));
+                                //hasErr = 1;
                             }
                         });
                         if (hasErr === 0) {
