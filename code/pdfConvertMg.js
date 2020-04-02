@@ -8,7 +8,7 @@ var exec = require('child_process').execFile;
 var crypto = require('crypto');
 var sd = require('silly-datetime');
 
-var loadini = require('./iniParse')
+var comFunc = require('./commonFunc')()
 var comStr = require('./commomStr')
 
 var userFileCacheDirName = comStr.UserCacheDirName;
@@ -143,18 +143,26 @@ module.exports = xx = function() {
         return comStr.FileTypeStr.kPDF;
     }
 
-    function GetProgress(iniPath)
-    {
+    function GetProgress(iniPath) {
         try {
-            var loadObj = new loadini(iniPath);
+            var loadObj = comFunc.loadIni(iniPath);
             var Info = loadObj['progress'];
             var prg = Info['progress'];
-            console.log(prg);
-            return prg;            
+            //console.log(prg);
+            return prg.toString();            
         } catch (error) {
             console.log(error);
             return 0;
         }
+    }
+
+    function GetTaskWorkDir(taskMD5) {
+        return path.join(__dirname,'../',userFileCacheDirName,taskMD5);
+    }
+
+    function GetTaskIniProgress(taskMD5){
+        let progressIniName = taskMD5+ '_' + 'progress.ini';
+        return path.join(GetTaskWorkDir(taskMD5),progressIniName);
     }
 
     $.Init = function(req, callback) {
@@ -208,6 +216,13 @@ module.exports = xx = function() {
                     {
                         var fileNameWithExt = fileMD5 + '.PDF';
                         var filePath = path.join(__dirname,'../',userFileCacheDirName,fileMD5,fileNameWithExt);
+                        if(fs.existsSync(filePath)){
+                            console.log(fileMD5);
+                            console.log(fs.statSync(filePath).size);
+                        }
+                        else{
+                            console.log(fileMD5 + 'NOT Exist');
+                        }
                         var filePwd = jsonTxt['Pwd'];
                         var cmdGetPageCount = [filePath];
                         if(  filePwd != null && filePwd != undefined && filePwd != "")
@@ -236,14 +251,22 @@ module.exports = xx = function() {
                         /// 获取转换类型字符串
                         var taskType = GetTaskType(jsonTxt['FromFileType'],jsonTxt['ToFileType']);
                         /// pdf路径 
-                        var fileWorkPath = path.join(__dirname,'../',userFileCacheDirName,fileMD5);
+                        var fileWorkPath = GetTaskWorkDir(fileMD5)                      
+
                         var fileNameWithExt = fileMD5 + GetFileExt(jsonTxt['FromFileType']);
                         var srcFilePath = path.join(fileWorkPath,fileNameWithExt);
                         /// 转换结果输出目录
                         var outputFilePath = path.join(fileWorkPath,"output");
+                        if(fs.existsSync(outputFilePath))
+                        {
+                            comFunc.deleteFolderRecursive(outputFilePath);
+                        }
                         /// 转换过程ini文件，其记录了进度
-                        var progFileName = fileMD5 + '_' + 'progress.ini';
-                        var progressIniPath = path.join(fileWorkPath,progFileName);
+                        var progressIniPath = GetTaskIniProgress(fileMD5);
+                        if(fs.existsSync(progressIniPath))
+                        {
+                            fs.unlinkSync(progressIniPath);
+                        }
                         /// 转换页数范围
                         var pageRange = jsonTxt['PageRange'];
                         /// 目标文件后缀，通过ToFileType获取
@@ -275,19 +298,13 @@ module.exports = xx = function() {
                     var fileMD5 = jsonTxt['FileMD5'];
                     if(fileMD5 != undefined)
                     {
-//｛
-//     MsgType:HeartBeat
-//     FileMD5:xxx (字符串)   
-//     Progress：100（1-100）
-//     ConvertDone: 1 (数据 0 ，1表示完成)
-// ｝
-                        var fileWorkPath = path.join(__dirname,'../',userFileCacheDirName,fileMD5);
+                        var fileWorkPath = GetTaskWorkDir(fileMD5);
                         var progFileName = fileMD5 + '_' + 'progress.ini';
                         var progressIniPath = path.join(fileWorkPath,progFileName);
                         var progress = GetProgress(progressIniPath);
                         console.log(process);
                         var convertDone = 0;
-                        if(process == '100')
+                        if( Number(progress) == 100)
                         {
                             convertDone = 1;
                         }
@@ -319,8 +336,7 @@ module.exports = xx = function() {
                             });                       
                             var resJson = {'MsgType':comStr.MsgType.kStopConvert,'ErrorCode':0};
                             callback("ok",JSON.stringify(resJson));
-                        }
-                        
+                        }                        
                     }
                     else
                     {
@@ -334,20 +350,6 @@ module.exports = xx = function() {
                     break;                   
             }
         })
-
-        // var fields = req.body;
-        // var files = req.files;
-
-        // // MsgType: Init（枚举值）
-        // // FileMD5:xxx (字符串)
-        // // FileSize:1024 (数值，单位byte)
-        // // FromFileType: PDF(枚举值)
-        // var chunkNumber = fields['MsgType'];
-        // var chunkSize = fields['FileMD5'];
-        // var totalSize = fields['FileSize'];
-        // var identifier = cleanIdentifier(fields['FromFileType']);
-        // var filename = fields['ToFileType'];
-        // console.log(fields);
     };
 
     return $;
