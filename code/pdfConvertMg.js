@@ -165,70 +165,51 @@ module.exports = xx = function() {
         return path.join(GetTaskWorkDir(taskMD5),progressIniName);
     }
 
+    function GetTaskOutputDir(taskMD5){
+        return path.join(GetTaskWorkDir(taskMD5),'output');
+    }
+
     $.Init = function(req, callback) {
 
-        var postData = '';
-        // 18. 给req对象注册一个接收数据的事件
+        var postData = ''; 
         req.on('data',function (chuck) {  
-            /**data事件详解
-             * 浏览器每发送一次数据包（chuck），该函数会调用一次。
-             * 该函数会调用多次，调用的次数是由数据和网速限制的
-             */
-            // 19. 每次发送的都数据都叠加到postData里面
             postData += chuck;
         })
-        // 20. 到post请求数据发完了之后会执行一个end事件，这个事件只执行一次
+
         req.on('end', function () {
-            // 21. 此时服务器成功接受了本次post请求的参数
-            // post请求最终获取到的数据就是url协议组成结构中的query部分
-            console.log(postData);
-            var jsonTxt = JSON.parse(postData);
-            console.log(jsonTxt);
-            // 22. 使用querystring模块来解析post请求
-            /**
-             * querystring详解
-             * 参数：要解析的字符串
-             * 返回值：解析之后的对象。
-             */
-            var postObjc = querystring.parse(postData);
-            // 23. 打印出post请求参数，
-            console.log(postObjc);
+            try {
+                console.log(postData);
+                var jsonTxt = JSON.parse(postData);
+                console.log(jsonTxt);                
+            } catch (error) {
+                var resJson = {'MsgType':comStr.MsgType.kInit,'ErrorCode':-1,'ErrorMsg':'post data invalid'};
+                callback('fail',JSON.stringify(resJson));
+            }
+
             var msgType = jsonTxt['MsgType'];
-            switch(msgType)
-            {
+            var fileMD5 = jsonTxt['FileMD5']
+            switch(msgType) {
                 case comStr.MsgType.kInit:
-                    var res = Init(jsonTxt);
-                    if(res == 'OK')
-                    {
-                        var resJson = {'MsgType':kInit,'ErrorCode':0};
-                        callback(resJson);
-                    }
-                    else
-                    {
-                        var resJson = {'MsgType':kInit,'ErrorCode':-1};
-                        callback(resJson);
-                    }
+                    var resJson = {'MsgType':comStr.MsgType.kInit,'ErrorCode':-1,'ErrorMsg':'msgType invalid'};
+                    callback('fail',JSON.stringify(resJson));
                     break;
                 case comStr.MsgType.kGetPageCount:
-                    //userFileCacheDir/md5/md5.pdf
-                    var fileMD5 = jsonTxt['FileMD5']
-                    if( fileMD5 != undefined )
-                    {
+                    if( fileMD5 != undefined ) {
                         var fileNameWithExt = fileMD5 + '.PDF';
-                        var filePath = path.join(__dirname,'../',userFileCacheDirName,fileMD5,fileNameWithExt);
+                        var filePath = path.join(GetTaskWorkDir(fileMD5),fileNameWithExt);
                         if(fs.existsSync(filePath)){
                             console.log(fileMD5);
                             console.log(fs.statSync(filePath).size);
-                        }
-                        else{
+                        } else {
                             console.log(fileMD5 + 'NOT Exist');
                         }
+
                         var filePwd = jsonTxt['Pwd'];
                         var cmdGetPageCount = [filePath];
-                        if(  filePwd != null && filePwd != undefined && filePwd != "")
-                        {
+                        if(  filePwd != null && filePwd != undefined && filePwd != "") {
                             cmdGetPageCount = [filePath,filePwd];
                         }
+
                         ExcuteCmd(comStr.MsgType.kGetPageCount,fileMD5, cmdGetPageCount,function(pageNum){
                             var resJON = {'MsgType':comStr.MsgType.kGetPageCount,'ErrorCode':0,'PageCount':Number(pageNum)};
                             console.log(resJON);
@@ -237,15 +218,12 @@ module.exports = xx = function() {
                             callback("ok",strJson);
                         });
                     }
-                    else
-                    {
+                    else {
                         callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kGetPageCount,'ErrorCode':-1,'PageCount':-3}));
                     }
                     break;
                 case comStr.MsgType.kStartConvert:
-                    var fileMD5 = jsonTxt['FileMD5']
-                    if( fileMD5 != undefined )
-                    {
+                    if( fileMD5 != undefined ){
                         /// 计算md5(pdf路径+pHuDdunf+{年月日})
                         var pathMD5 = GetPathMD5(fileMD5);
                         /// 获取转换类型字符串
@@ -256,15 +234,13 @@ module.exports = xx = function() {
                         var fileNameWithExt = fileMD5 + GetFileExt(jsonTxt['FromFileType']);
                         var srcFilePath = path.join(fileWorkPath,fileNameWithExt);
                         /// 转换结果输出目录
-                        var outputFilePath = path.join(fileWorkPath,"output");
-                        if(fs.existsSync(outputFilePath))
-                        {
+                        var outputFilePath = GetTaskOutputDir(fileMD5);
+                        if(fs.existsSync(outputFilePath)) {
                             comFunc.deleteFolderRecursive(outputFilePath);
                         }
                         /// 转换过程ini文件，其记录了进度
                         var progressIniPath = GetTaskIniProgress(fileMD5);
-                        if(fs.existsSync(progressIniPath))
-                        {
+                        if(fs.existsSync(progressIniPath)) {
                             fs.unlinkSync(progressIniPath);
                         }
                         /// 转换页数范围
@@ -274,7 +250,7 @@ module.exports = xx = function() {
                         /// 原文件密码
                         var filePwd = jsonTxt['Pwd'];
                         var cmdJSON = [pathMD5, taskType, srcFilePath, outputFilePath, progressIniPath, pageRange==undefined?'':pageRange, dstFileExt,filePwd==undefined?'':filePwd];
-                        let hasErr = 0;
+
                         ExcuteCmd(comStr.MsgType.kStartConvert, fileMD5, cmdJSON,function(err){
                             if(err != undefined && err!=""){
                                 var resJON = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-1};
@@ -283,70 +259,72 @@ module.exports = xx = function() {
                                 //hasErr = 1;
                             }
                         });
-                        if (hasErr === 0) {
-                            var resTestJson = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':0};
-                            callback("ok",JSON.stringify(resTestJson));                            
-                        }
-                    }
-                    else
-                    {
+                        
+                        var resTestJson = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':0};
+                        callback("ok",JSON.stringify(resTestJson));                            
+                        
+                    } else {
                         callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-1}));
                     }
                     break;
                 case comStr.MsgType.kHeartBeat:
                     /// 读取MD5的文件相应的ini解析其中progress并返回给客户端
-                    var fileMD5 = jsonTxt['FileMD5'];
-                    if(fileMD5 != undefined)
-                    {
-                        var fileWorkPath = GetTaskWorkDir(fileMD5);
-                        var progFileName = fileMD5 + '_' + 'progress.ini';
-                        var progressIniPath = path.join(fileWorkPath,progFileName);
+                    if(fileMD5 != undefined) {
+                        var progressIniPath = GetTaskIniProgress(fileMD5);
                         var progress = GetProgress(progressIniPath);
                         console.log(process);
                         var convertDone = 0;
-                        if( Number(progress) == 100)
-                        {
+                        if( Number(progress) == 100) {
+                            if(taskMap.has(fileMD5)) {                                    
+                                taskMap.delete(fileMD5);
+                                console.log("conVertDone After del cur taskSize=" + taskMap.size);                            
+                            }
                             convertDone = 1;
                         }
                         var resJson = {'MsgType':comStr.MsgType.kHeartBeat,'FileMD5':fileMD5,'Progress':Number(progress),'ConvertDone':convertDone};
                         callback("ok",JSON.stringify(resJson));
                     }
-                    else
-                    {
+                    else {
                         callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kHeartBeat,'ErrorCode':-1}));
                     }
                     break;
                 case comStr.MsgType.kStopConvert:
-                    var fileMD5 = jsonTxt['FileMD5'];
-                    if(fileMD5 != undefined)
-                    {
+                    if(fileMD5 != undefined) {
                         if(taskMap.has(fileMD5)) {
                             let child = taskMap.get(fileMD5);
                             child.kill();
                             child.on('exit',function(code,signal){
-                            if(code){
-                                console.log("child exit code:"+code)
-                            }else{
-                                console.log("child exit signal:"+signal)
-                            }     
-                            
-                            taskMap.delete(fileMD5);
-                            console.log("After del cur taskSize=" + taskMap.size);
-                            
-                            });                       
+                                if(code){
+                                    console.log("child exit code:"+code)
+                                }else{
+                                    console.log("child exit signal:"+signal)
+                                }     
+                                
+                                taskMap.delete(fileMD5);
+                                console.log("After del cur taskSize=" + taskMap.size);                            
+                            });  
+
                             var resJson = {'MsgType':comStr.MsgType.kStopConvert,'ErrorCode':0};
                             callback("ok",JSON.stringify(resJson));
                         }                        
-                    }
-                    else
-                    {
+                    } else {
                         callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kHeartBeat,'ErrorCode':-1}));
                     }
                     break;    
                 case comStr.MsgType.kGetFileUrl:
-                    var fileMD5 = jsonTxt['FileMD5'];
+                    var outputDir = GetTaskOutputDir(fileMD5);
+                    if (fs.existsSync(outputDir)) {
+                        var fileList = [];
+                        var tmpFileList = comFunc.readFileList(outputDir,fileList);
+                        var resJson = {'MsgType':comStr.MsgType.kGetFileUrl,'FileMD5':fileMD5.toString(),'DownloadURL':fileList};
+                        console.log(resJson);
+                        callback("ok",JSON.stringify(resJson));
+                    } else {
+                        callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kGetFileUrl,'ErrorCode':-1}))
+                    }
                     break;
                 default:
+                    callback("ok",JSON.stringify({'MsgType':comStr.MsgType.kInit,'ErrorCode':-1,'ErrorMsg':'msgType invalid'}));
                     break;                   
             }
         })
