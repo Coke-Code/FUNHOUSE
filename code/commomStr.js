@@ -12,9 +12,9 @@ const commStr =
         kHtml:7,
         kPng:8,
         kJpg:9,
-        kBmp:10,
-        kTif:11,
-        kgif:12,
+        kgif:10,
+        kBmp:11,
+        kTif:12,
         kTxt:13,
     },
 
@@ -30,9 +30,9 @@ const commStr =
         kHtml:'.html',
         kPng:'.png',
         kJpg:'.jpg',
+        kgif:'.gif',
         kBmp:'.bmp',
         kTif:'.tif',
-        kgif:'.gif',
         kTxt:'.txt',
     },
     
@@ -41,9 +41,10 @@ const commStr =
         kInit : 0,
         kGetPageCount :1,//VerifyPassword 也用此命令
         kStartConvert : 2,
-        kHeartBeat : 3,
-        kGetFileUrl : 4,
-        kUploadFile : 5,
+        kStopConvert:3,
+        kHeartBeat : 4,
+        kGetFileUrl : 5,
+        kUploadFile : 6,
     },
     'StrXunJie': 'pHuDdunf',
     'UserCacheDirName':'UserFileCacheDir'    

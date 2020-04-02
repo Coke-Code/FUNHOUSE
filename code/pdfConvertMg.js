@@ -294,6 +294,12 @@ module.exports = xx = function() {
                         callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kHeartBeat,'ErrorCode':-1}));
                     }
                     break;
+                case comStr.MsgType.kStopConvert:
+                    
+                    break;    
+                case comStr.MsgType.kGetFileUrl:
+                    var fileMD5 = jsonTxt['FileMD5'];
+                    break;
                 default:
                     break;                   
             }
