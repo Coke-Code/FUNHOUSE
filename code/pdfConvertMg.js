@@ -12,7 +12,7 @@ var loadini = require('./iniParse')
 var comStr = require('./commomStr')
 
 var userFileCacheDirName = comStr.UserCacheDirName;
-
+var taskMap = new Map();
 
 module.exports = xx = function() {
     var $ = this;
@@ -23,13 +23,18 @@ module.exports = xx = function() {
         fs.mkdirSync(userFileCacheDirName);
     } catch (e) {}
 
-    function ExcuteCmd(cmdJson,callback){
+    function ExcuteCmd(taskType,taskMD5,cmdJson,callback){
         console.log("fun() start");
-        exec(pdfConsoleExe,cmdJson, function(err, data) {
+        let child = exec(pdfConsoleExe,cmdJson, function(err, data) {
             console.log(err)
             console.log(data.toString()); 
             callback(data.toString());               
           });
+          if(taskType == comStr.MsgType.kStartConvert){
+              taskMap.set(taskMD5,child);
+              console.log("Add Current TaskMapSize:"+taskMap.size);
+          }
+          console.log(child);
     }
 
     function Init(jsonTxt){
@@ -209,7 +214,7 @@ module.exports = xx = function() {
                         {
                             cmdGetPageCount = [filePath,filePwd];
                         }
-                        ExcuteCmd(cmdGetPageCount,function(pageNum){
+                        ExcuteCmd(comStr.MsgType.kGetPageCount,fileMD5, cmdGetPageCount,function(pageNum){
                             var resJON = {'MsgType':comStr.MsgType.kGetPageCount,'ErrorCode':0,'PageCount':Number(pageNum)};
                             console.log(resJON);
                             var strJson = JSON.stringify(resJON);
@@ -247,7 +252,7 @@ module.exports = xx = function() {
                         var filePwd = jsonTxt['Pwd'];
                         var cmdJSON = [pathMD5, taskType, srcFilePath, outputFilePath, progressIniPath, pageRange==undefined?'':pageRange, dstFileExt,filePwd==undefined?'':filePwd];
                         let hasErr = 0;
-                        ExcuteCmd(cmdJSON,function(err){
+                        ExcuteCmd(comStr.MsgType.kStartConvert, fileMD5, cmdJSON,function(err){
                             if(err != undefined && err!=""){
                                 var resJON = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-1};
                                 console.log(resJON);
@@ -295,7 +300,32 @@ module.exports = xx = function() {
                     }
                     break;
                 case comStr.MsgType.kStopConvert:
-                    
+                    var fileMD5 = jsonTxt['FileMD5'];
+                    if(fileMD5 != undefined)
+                    {
+                        if(taskMap.has(fileMD5)) {
+                            let child = taskMap.get(fileMD5);
+                            child.kill();
+                            child.on('exit',function(code,signal){
+                            if(code){
+                                console.log("child exit code:"+code)
+                            }else{
+                                console.log("child exit signal:"+signal)
+                            }     
+                            
+                            taskMap.delete(fileMD5);
+                            console.log("After del cur taskSize=" + taskMap.size);
+                            
+                            });                       
+                            var resJson = {'MsgType':comStr.MsgType.kStopConvert,'ErrorCode':0};
+                            callback("ok",JSON.stringify(resJson));
+                        }
+                        
+                    }
+                    else
+                    {
+                        callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kHeartBeat,'ErrorCode':-1}));
+                    }
                     break;    
                 case comStr.MsgType.kGetFileUrl:
                     var fileMD5 = jsonTxt['FileMD5'];
