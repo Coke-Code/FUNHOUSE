@@ -78,7 +78,7 @@ module.exports = flow = function(uploadtmpdir,uploadmd5path) {
   }
 
   function WriteUplodFile(dest, source, total, start = 0) { // 写文件，多个文件连续写
-    if(start >= total) return
+    // if(start >= total) return
     let size = 0
     let stat = fs.statSync(dest)
     if(stat.isFile()) {
@@ -86,13 +86,22 @@ module.exports = flow = function(uploadtmpdir,uploadmd5path) {
       // console.log(size)
       let WSoptions = {
         start: size,
-        flags: "r+"
+        flags: "r+",
+        encoding:null //默认null
+      }
+      let RSoptions = {
+        flags:'r', //默认 'r'
+        encoding:null //默认null
       }
       let WStream = fs.createWriteStream(dest,WSoptions)
-      let readStream = fs.createReadStream(source[start]);
+      let readStream = fs.createReadStream(source[start],RSoptions);
       readStream.pipe(WStream, {end:false})
       readStream.on("end", function() {
-        WriteUplodFile(dest, source, total, ++start)
+        WStream.end()
+        if(++start >= total) {
+          return ;
+        }
+        WriteUplodFile(dest, source, total, start)
       })
     }
   }
