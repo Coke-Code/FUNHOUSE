@@ -28,25 +28,11 @@ app.post('/upload', multipartMiddleware, function(req, res) {
 });
 
 app.post('/IMyFoneGateway/PDFConvert', function(req, res){
-  console.log('index post');
-  var bodyR = req.body;
-  console.log(bodyR);
+  console.log('Accept post');
   var str = pdfConvertMgr.Init(req, function(err,resStr){
-     console.log(resStr);
-    //setTimeout(function (str) {
+      console.log(resStr);
       res.status(200).send(resStr);
-    //}, 500);
   });
-  //res.status(200).json({MsgType:1,ErrorCode:0,PageCount:-1})
-  // console.log('index post');
-  // var bodyR = req.body;
-  // console.log(bodyR);
-  // var str = pdfConvertMgr.Init(req, function(str){
-  //   setTimeout(function () {
-  //     res.status(200).send(str);
-  //   }, 500);
-  // });
-  // res.status(200).send("hello world");
 });
 
 app.get('/IMyFoneGateway/PDFConvert', function(req, res){

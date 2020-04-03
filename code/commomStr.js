@@ -38,7 +38,7 @@ const commStr =
     
    'MsgType':
     {
-        kInit : 0,
+        kInvalid : 0,
         kGetPageCount :1,//VerifyPassword 也用此命令
         kStartConvert : 2,
         kStopConvert:3,
