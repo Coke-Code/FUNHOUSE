@@ -196,7 +196,7 @@ module.exports = xx = function() {
                         break;
                     case comStr.MsgType.kGetPageCount:
                         if( fileMD5 != undefined ) {
-                            var fileNameWithExt = fileMD5 + GetFileExt[jsonTxt['FromFileType']];
+                            var fileNameWithExt = fileMD5 + GetFileExt(jsonTxt['FromFileType']);
                             var filePath = path.join(GetTaskWorkDir(fileMD5),fileNameWithExt);
                             if(fs.existsSync(filePath)){
                                 console.log(fileMD5);
@@ -210,7 +210,7 @@ module.exports = xx = function() {
                             if(  filePwd != null && filePwd != undefined && filePwd != "") {
                                 cmdGetPageCount = [filePath,filePwd];
                             }
-    
+                            
                             ExcuteCmd(comStr.MsgType.kGetPageCount,fileMD5, cmdGetPageCount,function(pageNum){
                                 var resJON = {'MsgType':comStr.MsgType.kGetPageCount,'ErrorCode':0,'PageCount':Number(pageNum)};
                                 console.log(resJON);
