@@ -1,6 +1,7 @@
 .DS_Store
 UserFileCacheDir/*
 tool/TEMP/*
+tool/output/*
 dist/electron/*
 dist/web/*
 build/*
