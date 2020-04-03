@@ -323,7 +323,7 @@ module.exports = xx = function() {
                         var outputDir = GetTaskOutputDir(fileMD5);
                         if (fs.existsSync(outputDir)) {
                             var fileList = [];
-                            var tmpFileList = comFunc.readFileList(outputDir,fileList);
+                            var tmpFileList = comFunc.readFileList(outputDir,fileList,outputDir);
                             var resJson = {'MsgType':comStr.MsgType.kGetFileUrl,'FileMD5':fileMD5.toString(),'DownloadURL':fileList};
                             console.log(resJson);
                             callback("ok",JSON.stringify(resJson));
