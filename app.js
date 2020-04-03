@@ -78,30 +78,32 @@ app.get('/IMyFoneGateway/PDFConvert/upload', function(req, res) {
 
 app.get('/IMyFoneGateway/PDFConvert/download',function(req, res, next){
   let identify = req.query.identify
-  if (identify === undefined) {
+  let filename = req.query.filename
+  if (identify === undefined || filename === undefined) {
     res.set("Content-type","text/html");
     res.send("error");
     res.end();
   } else {
-    let currFile = `${__dirname}/UserFileCacheDir/${identify}/output/${identify}.docx`
-    console.log('111111111' + currFile)
+    let currFile = `${__dirname}/UserFileCacheDir/${identify}/output/${filename}`
     let fileName = '208ef23bf2d9d22fa21aa77594575cca.docx'
     console.log(currFile)
     fs.exists(currFile,function(exist) {
         if(exist){
-            res.set({
-                "Content-type":"application/octet-stream",
-                "Content-Disposition":"attachment;filename="+encodeURI(fileName)
-            });
-            fReadStream = fs.createReadStream(currFile);
-            fReadStream.on("data",function(chunk){res.write(chunk,"binary")});
-            fReadStream.on("end",function () {
-                res.end();
-            });
+          let stat = fs.statSync(currFile)
+          res.set({
+            "Content-type":"application/octet-stream",
+            "Content-Disposition":"attachment;filename="+encodeURI(fileName),
+            "Content-length" : stat.size
+          });
+          fReadStream = fs.createReadStream(currFile);
+          fReadStream.on("data",function(chunk){res.write(chunk,"binary")});
+          fReadStream.on("end",function () {
+              res.end();
+          });
         }else{
-            res.set("Content-type","text/html");
-            res.send("error");
-            res.end();
+          res.set("Content-type","text/html");
+          res.send("error");
+          res.end();
         }
     });
   }
