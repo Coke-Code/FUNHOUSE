@@ -6,6 +6,7 @@ var multipartMiddleware = multipart();
 var uploader = require('./code/uploader.js')('UserFileCacheDir/tmp','UserFileCacheDir');
 var pdfConvertMgr = require('./code/pdfConvertMg.js')();
 var app = express();
+const fs = require('fs')
 
 // Configure access control allow origin header stuff
 var ACCESS_CONTROLL_ALLOW_ORIGIN = true;
@@ -14,9 +15,9 @@ var ACCESS_CONTROLL_ALLOW_ORIGIN = true;
 app.use(express.static(__dirname + '/public'));
 
 // Handle uploads through Uploader.js
-app.post('/upload', multipartMiddleware, function(req, res) {
-  uploader.post(req, function(status, filename, original_filename, identifier) {
-    // console.log('POST', status, original_filename, identifier);
+app.post('/IMyFoneGateway/PDFConvert/upload', multipartMiddleware, function(req, res) {
+  uploader.post(req, function(status, filename, original_filename, identify) {
+    // console.log('POST', status, original_filename, identify);
     if (ACCESS_CONTROLL_ALLOW_ORIGIN) {
       res.header("Access-Control-Allow-Origin", "*");
       res.header("Access-Control-Allow-Headers", "content-type")
@@ -46,7 +47,7 @@ app.get('/IMyFoneGateway/PDFConvert', function(req, res){
   // res.status(200).send("hello world");
 });
 
-app.options('/upload', function(req, res){
+app.options('/IMyFoneGateway/PDFConvert/upload', function(req, res){
   console.log('OPTIONS');
   if (ACCESS_CONTROLL_ALLOW_ORIGIN) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -64,8 +65,8 @@ app.options('/upload', function(req, res){
 // });
 
 // Handle status checks on chunks through Uploader.js
-app.get('/upload', function(req, res) {
-  uploader.get(req, function(status, filename, original_filename, identifier) {
+app.get('/IMyFoneGateway/PDFConvert/upload', function(req, res) {
+  uploader.get(req, function(status, filename, original_filename, identify) {
     // console.log('GET', status);
     if (ACCESS_CONTROLL_ALLOW_ORIGIN) {
       res.header("Access-Control-Allow-Origin", "*");
@@ -74,8 +75,36 @@ app.get('/upload', function(req, res) {
   });
 });
 
-app.get('/download/:identifier', function(req, res) {
-  uploader.write(req.params.identifier, res);
+
+app.get('/IMyFoneGateway/PDFConvert/download',function(req, res, next){
+  let identify = req.query.identify
+  if (identify === undefined) {
+    res.set("Content-type","text/html");
+    res.send("error");
+    res.end();
+  } else {
+    let currFile = `${__dirname}/UserFileCacheDir/${identify}/output/${identify}.docx`
+    console.log('111111111' + currFile)
+    let fileName = '208ef23bf2d9d22fa21aa77594575cca.docx'
+    console.log(currFile)
+    fs.exists(currFile,function(exist) {
+        if(exist){
+            res.set({
+                "Content-type":"application/octet-stream",
+                "Content-Disposition":"attachment;filename="+encodeURI(fileName)
+            });
+            fReadStream = fs.createReadStream(currFile);
+            fReadStream.on("data",function(chunk){res.write(chunk,"binary")});
+            fReadStream.on("end",function () {
+                res.end();
+            });
+        }else{
+            res.set("Content-type","text/html");
+            res.send("error");
+            res.end();
+        }
+    });
+  }
 });
 
 app.listen(34565);
