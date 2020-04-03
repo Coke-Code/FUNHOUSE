@@ -29,9 +29,9 @@ app.post('/IMyFoneGateway/PDFConvert/upload', multipartMiddleware, function(req,
 });
 
 app.post('/IMyFoneGateway/PDFConvert', function(req, res){
-  console.log('Accept post');
+  //console.log('Accept post');
   var str = pdfConvertMgr.Init(req, function(err,resStr){
-      console.log(resStr);
+      //console.log(resStr);
       res.status(200).send(resStr);
   });
 });

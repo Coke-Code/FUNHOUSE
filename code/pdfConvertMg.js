@@ -180,7 +180,7 @@ module.exports = xx = function() {
             try {
                 console.log(postData);
                 var jsonTxt = JSON.parse(postData);
-                console.log(jsonTxt);                
+               //console.log(jsonTxt);                
             } catch (error) {
                 var resJson = {'MsgType':comStr.MsgType.kInit,'ErrorCode':-1,'ErrorMsg':'post data invalid'};
                 callback('fail',JSON.stringify(resJson));
@@ -280,7 +280,7 @@ module.exports = xx = function() {
                         if(fileMD5 != undefined) {
                             var progressIniPath = GetTaskIniProgress(fileMD5);
                             var progress = GetProgress(progressIniPath);
-                            console.log(process);
+                            //console.log(process);
                             var convertDone = 0;
                             if( Number(progress) == 100) {
                                 if(taskMap.has(fileMD5)) {                                    
