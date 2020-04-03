@@ -44,16 +44,22 @@ module.exports = commonFunc = function () {
         }
     };
 
-    $.readFileList = function(dir, filesList = []) {
+    $.readFileList = function(dir, filesList = [], filterPath) {
         const files = fs.readdirSync(dir);
         //console.log(files);
         files.forEach((item, index) => {
             var fullPath = path.join(dir, item);
             const stat = fs.statSync(fullPath);
             if (stat.isDirectory()) {      
-                readFileList(path.join(dir, item), filesList);  //递归读取文件
-            } else {                
-                filesList.push(fullPath);                     
+                readFileList(path.join(dir, item), filesList,filterPath);  //递归读取文件
+            } else {      
+                if (filterPath != undefined && filterPath != null && filterPath!="") {
+                    var filterlength = filterPath.length;
+                    var replaceStr=fullPath.substr(filterlength + 1); 
+                    filesList.push(replaceStr);   
+                } else {                    
+                    filesList.push(fullPath);                     
+                }          
             }        
         });
         return filesList;

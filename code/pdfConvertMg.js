@@ -212,7 +212,14 @@ module.exports = xx = function() {
                             }
                             
                             ExcuteCmd(comStr.MsgType.kGetPageCount,fileMD5, cmdGetPageCount,function(pageNum){
-                                var resJON = {'MsgType':comStr.MsgType.kGetPageCount,'ErrorCode':0,'PageCount':Number(pageNum)};
+                                var resPageNum = Number(pageNum);
+                                if(Number(pageNum) == 0){
+                                    resPageNum = -1; //文件是加密的
+                                } else if(Number(pageNum) == -1){
+                                    resPageNum = -2; //文件是损坏的
+                                }
+
+                                var resJON = {'MsgType':comStr.MsgType.kGetPageCount,'ErrorCode':0,'PageCount':resPageNum};
                                 console.log(resJON);
                                 var strJson = JSON.stringify(resJON);
                                 console.log(strJson);
@@ -316,7 +323,7 @@ module.exports = xx = function() {
                         var outputDir = GetTaskOutputDir(fileMD5);
                         if (fs.existsSync(outputDir)) {
                             var fileList = [];
-                            var tmpFileList = comFunc.readFileList(outputDir,fileList);
+                            var tmpFileList = comFunc.readFileList(outputDir,fileList,outputDir);
                             var resJson = {'MsgType':comStr.MsgType.kGetFileUrl,'FileMD5':fileMD5.toString(),'DownloadURL':fileList};
                             console.log(resJson);
                             callback("ok",JSON.stringify(resJson));
