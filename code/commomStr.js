@@ -20,20 +20,20 @@ const commStr =
 
     'FileTypeStr':
     {
-        kPDF : '.PDF',
-        kDoc : '.Doc',
-        kDocx: '.docx',
-        kPpt : '.ppt',
-        kPptx:'.pptx',
-        kXls : '.xls',
-        kXlsx:'.xlsx',
-        kHtml:'.html',
-        kPng:'.png',
-        kJpg:'.jpg',
-        kgif:'.gif',
-        kBmp:'.bmp',
-        kTif:'.tif',
-        kTxt:'.txt',
+        kPDF : 'pdf',
+        kDoc : 'doc',
+        kDocx: 'docx',
+        kPpt : 'ppt',
+        kPptx:'pptx',
+        kXls : 'xls',
+        kXlsx:'xlsx',
+        kHtml:'html',
+        kPng:'png',
+        kJpg:'jpg',
+        kgif:'gif',
+        kBmp:'bmp',
+        kTif:'tif',
+        kTxt:'txt',
     },
     
    'MsgType':
@@ -45,6 +45,7 @@ const commStr =
         kHeartBeat : 4,
         kGetFileUrl : 5,
         kUploadFile : 6,
+        kVerifyPassword:7,
     },
     'StrXunJie': 'pHuDdunf',
     'UserCacheDirName':'UserFileCacheDir'    

@@ -19,16 +19,24 @@ module.exports = xx = function() {
     var pdfConsoleExe = path.resolve(__dirname,'../tool/PDFConsole.exe');
     console.log(pdfConsoleExe);
 
+    var pdfTool = path.resolve(__dirname,"../tool2/pdftool.exe");
+    console.log(pdfTool);
+
     try {
         fs.mkdirSync(userFileCacheDirName);
     } catch (e) {}
 
-    function ExcuteCmd(taskType,taskMD5,cmdJson,callback){
+    function ExcuteCmd(toolExe,taskType,taskMD5,cmdJson,callback){
         console.log("fun() start");
-        let child = exec(pdfConsoleExe,cmdJson, function(err, data) {
+        let child = exec(toolExe,cmdJson, function(err, stdout , stderr) {
             console.log(err)
-            console.log(data.toString()); 
-            callback(data.toString());               
+            console.log(stdout.toString()); 
+            console.log(stderr.toString());    
+            if(toolExe.indexOf("pdftool.exe")!=-1){
+                callback(stderr.toString());
+            }else{
+                callback(stdout.toString());        
+            } 
           });
           if(taskType == comStr.MsgType.kStartConvert){
               taskMap.set(taskMD5,child);
@@ -64,9 +72,9 @@ module.exports = xx = function() {
         return 'OK';
     }
 
-    function GetPathMD5(fileMD5)
+    function GetPathMD5(fileMD5,fileExt)
     {
-        var fileNameWithExt = fileMD5 + '.PDF';
+        var fileNameWithExt = fileMD5 + '.' + fileExt;
         var filePath = path.join(__dirname,'../',userFileCacheDirName,fileMD5,fileNameWithExt);
         var time = sd.format(new Date(), 'YYYYMMDD');
         var combineStr = filePath + comStr.StrXunJie + time;
@@ -139,6 +147,39 @@ module.exports = xx = function() {
         else if (FileType == comStr.FileType.kDocx) {
             return comStr.FileTypeStr.kDocx;
         }
+        else if (FileType == comStr.FileType.kPpt) {
+            return comStr.FileTypeStr.kPpt;
+        }
+        else if (FileType == comStr.FileType.kPptx) {
+            return comStr.FileTypeStr.kPptx;
+        }
+        else if (FileType == comStr.FileType.kXls) {
+            return comStr.FileTypeStr.kXls;
+        }
+        else if (FileType == comStr.FileType.kXlsx) {
+            return comStr.FileTypeStr.kXlsx;
+        }
+        else if (FileType == comStr.FileType.kHtml) {
+            return comStr.FileTypeStr.kHtml;
+        }
+        else if (FileType == comStr.FileType.kPng) {
+            return comStr.FileTypeStr.kPng;
+        }
+        else if (FileType == comStr.FileType.kJpg) {
+            return comStr.FileTypeStr.kJpg;
+        }
+        else if (FileType == comStr.FileType.kTif) {
+            return comStr.FileTypeStr.kTif;
+        }
+        else if (FileType == comStr.FileType.kgif) {
+            return comStr.FileTypeStr.kgif;
+        }
+        else if (FileType == comStr.FileType.kBmp) {
+            return comStr.FileTypeStr.kBmp;
+        }
+        else if (FileType == comStr.FileType.kTxt) {
+            return comStr.FileTypeStr.kTxt;
+        }
 
         return comStr.FileTypeStr.kPDF;
     }
@@ -182,27 +223,26 @@ module.exports = xx = function() {
                 var jsonTxt = JSON.parse(postData);
                //console.log(jsonTxt);                
             } catch (error) {
-                var resJson = {'MsgType':comStr.MsgType.kInit,'ErrorCode':-1,'ErrorMsg':'post data invalid'};
+                var resJson = {'MsgType':comStr.MsgType.kInit,'ErrorCode':-100,'ErrorMsg':'post data invalid'};
                 callback('fail',JSON.stringify(resJson));
+                return;
             }
 
             try {
                 var msgType = jsonTxt['MsgType'];
                 var fileMD5 = jsonTxt['FileMD5']
-                switch(msgType) {
-                    case comStr.MsgType.kInit:
-                        var resJson = {'MsgType':comStr.MsgType.kInit,'ErrorCode':-1,'ErrorMsg':'msgType invalid'};
-                        callback('fail',JSON.stringify(resJson));
-                        break;
+                switch(msgType) {  
                     case comStr.MsgType.kGetPageCount:
                         if( fileMD5 != undefined ) {
-                            var fileNameWithExt = fileMD5 + GetFileExt(jsonTxt['FromFileType']);
+                            var fileNameWithExt = fileMD5 + '.' + GetFileExt(jsonTxt['FromFileType']);
                             var filePath = path.join(GetTaskWorkDir(fileMD5),fileNameWithExt);
                             if(fs.existsSync(filePath)){
                                 console.log(fileMD5);
                                 console.log(fs.statSync(filePath).size);
                             } else {
-                                console.log(fileMD5 + 'NOT Exist');
+                                console.log(fileMD5 + ' NOT Exist');
+                                callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kGetPageCount,'ErrorCode':-2,'PageCount':-3}));
+                                return;
                             }
     
                             var filePwd = jsonTxt['Pwd'];
@@ -211,7 +251,7 @@ module.exports = xx = function() {
                                 cmdGetPageCount = [filePath,filePwd];
                             }
                             
-                            ExcuteCmd(comStr.MsgType.kGetPageCount,fileMD5, cmdGetPageCount,function(pageNum){
+                            ExcuteCmd(pdfConsoleExe,comStr.MsgType.kGetPageCount,fileMD5, cmdGetPageCount,function(pageNum){
                                 var resPageNum = Number(pageNum);
                                 if(Number(pageNum) == 0){
                                     resPageNum = -1; //文件是加密的
@@ -233,13 +273,13 @@ module.exports = xx = function() {
                     case comStr.MsgType.kStartConvert:
                         if( fileMD5 != undefined ){
                             /// 计算md5(pdf路径+pHuDdunf+{年月日})
-                            var pathMD5 = GetPathMD5(fileMD5);
+                            var pathMD5 = GetPathMD5(fileMD5,GetFileExt(jsonTxt['FromFileType']));
                             /// 获取转换类型字符串
                             var taskType = GetTaskType(jsonTxt['FromFileType'],jsonTxt['ToFileType']);
                             /// pdf路径 
                             var fileWorkPath = GetTaskWorkDir(fileMD5)                      
     
-                            var fileNameWithExt = fileMD5 + GetFileExt(jsonTxt['FromFileType']);
+                            var fileNameWithExt = fileMD5 + '.' + GetFileExt(jsonTxt['FromFileType']);
                             var srcFilePath = path.join(fileWorkPath,fileNameWithExt);
                             /// 转换结果输出目录
                             var outputFilePath = GetTaskOutputDir(fileMD5);
@@ -259,7 +299,7 @@ module.exports = xx = function() {
                             var filePwd = jsonTxt['Pwd'];
                             var cmdJSON = [pathMD5, taskType, srcFilePath, outputFilePath, progressIniPath, pageRange==undefined?'':pageRange, dstFileExt,filePwd==undefined?'':filePwd];
     
-                            ExcuteCmd(comStr.MsgType.kStartConvert, fileMD5, cmdJSON,function(err){
+                            ExcuteCmd(pdfConsoleExe, comStr.MsgType.kStartConvert, fileMD5, cmdJSON,function(err){
                                 if(err != undefined && err!=""){
                                     var resJON = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-1};
                                     console.log(resJON);
@@ -330,6 +370,43 @@ module.exports = xx = function() {
                         } else {
                             callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kGetFileUrl,'ErrorCode':-1}))
                         }
+                        break;
+                    case comStr.MsgType.kVerifyPassword:
+                        var password = jsonTxt['Pwd'];
+                        var fileExtType = jsonTxt['FromFileType'];
+                        if((password == undefined || password == null || password == "") || (fileExtType == undefined || fileExtType == null)) {
+                            callback("invalid_req_param",JSON.stringify({'MsgType':comStr.MsgType.kVerifyPassword,'ErrorCode':-1}));
+                            return;
+                        }
+                        /// pdf路径 
+                        var fileWorkPath = GetTaskWorkDir(fileMD5)                      
+    
+                        var fileNameWithExt = fileMD5 + '.' + GetFileExt(jsonTxt['FromFileType']);
+                        var srcFilePath = path.join(fileWorkPath,fileNameWithExt);
+                        if(!fs.existsSync(srcFilePath)) {
+                            callback("invalid_req_param",JSON.stringify({'MsgType':comStr.MsgType.kVerifyPassword,'ErrorCode':-1}));
+                            return;
+                        }
+
+                        var fileNameDecryptWithExt = 'decrypt_' +fileMD5 + '.' + GetFileExt(jsonTxt['FromFileType']);
+                        var outputFilePath = path.join(fileWorkPath,fileNameDecryptWithExt);
+                        var cmdJSON = ["--decrypt", "--password="+password, srcFilePath, outputFilePath];
+    
+                        ExcuteCmd(pdfTool, comStr.MsgType.kVerifyPassword, fileMD5, cmdJSON,function(err){
+                            var hasCallBack = 0;
+                            if(err != undefined && err!=""){
+                                if(err.indexOf("invalid password") != -1){
+                                 var resJON = {'MsgType':comStr.MsgType.kVerifyPassword,'ErrorCode':-2};
+                                 console.log(resJON);
+                                 callback("fail",JSON.stringify(resJON));
+                                 hasCallBack = 1;
+                                }
+                            }
+
+                            if(hasCallBack == 0) {
+                                callback("ok",JSON.stringify({'MsgType':comStr.MsgType.kVerifyPassword,'ErrorCode':0}))
+                            }
+                        });
                         break;
                     default:
                         callback("ok",JSON.stringify({'MsgType':comStr.MsgType.kInit,'ErrorCode':-1,'ErrorMsg':'msgType invalid'}));

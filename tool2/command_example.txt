@@ -1,0 +1,6 @@
+pdftool.exe --decrypt --password=33 C:\PDFConvert\tool\2.mi.pdf -
+pdftool.exe --decrypt --password=33 C:\PDFConvert\tool\2.mi.pdf C:\PDFConvert\tool\2.pdf
+
+最后参数，
+若是"-"表示把解密文件输出来控制台。
+若是一个路径，表示把解密文件输出到文件。
