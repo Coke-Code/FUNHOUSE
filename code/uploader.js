@@ -98,6 +98,10 @@ module.exports = flow = function(uploadtmpdir,uploadmd5path) {
       readStream.pipe(WStream, {end:false})
       readStream.on("end", function() {
         WStream.end()
+        let stat = fs.statSync(source[start])
+        if(stat.isFile()) {
+          fs.unlinkSync(source[start])
+        }
         if(++start >= total) {
           return ;
         }
