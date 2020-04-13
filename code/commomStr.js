@@ -39,13 +39,14 @@ const commStr =
    'MsgType':
     {
         kInvalid : 0,
-        kGetPageCount :1,//VerifyPassword 也用此命令
+        kGetPageCount :1,
         kStartConvert : 2,
         kStopConvert:3,
         kHeartBeat : 4,
         kGetFileUrl : 5,
         kUploadFile : 6,
         kVerifyPassword:7,
+        kCheckFileExist:8,
     },
     'StrXunJie': 'pHuDdunf',
     'UserCacheDirName':'UserFileCacheDir'    

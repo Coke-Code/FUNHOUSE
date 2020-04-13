@@ -231,6 +231,11 @@ module.exports = xx = function() {
             try {
                 var msgType = jsonTxt['MsgType'];
                 var fileMD5 = jsonTxt['FileMD5']
+                if((msgType == undefined || msgType == null) || (fileMD5 == undefined || fileMD5 == null || fileMD5=="")) {
+                    callback("invalid_req_param",JSON.stringify({'MsgType':comStr.MsgType.kInvalid,'ErrorCode':-1}));
+                    return;
+                }
+
                 switch(msgType) {  
                     case comStr.MsgType.kGetPageCount:
                         if( fileMD5 != undefined ) {
@@ -407,6 +412,23 @@ module.exports = xx = function() {
                                 callback("ok",JSON.stringify({'MsgType':comStr.MsgType.kVerifyPassword,'ErrorCode':0}))
                             }
                         });
+                        break;
+                    case comStr.MsgType.kCheckFileExist:
+                        var fileExtType = jsonTxt['FromFileType'];
+                        if(fileExtType == undefined || fileExtType == null) {
+                            callback("invalid_req_param",JSON.stringify({'MsgType':comStr.MsgType.kCheckFileExist,'ErrorCode':-1}));
+                            return;
+                        }
+                        /// pdf路径 
+                        var fileWorkPath = GetTaskWorkDir(fileMD5)                      
+    
+                        var fileNameWithExt = fileMD5 + '.' + GetFileExt(jsonTxt['FromFileType']);
+                        var srcFilePath = path.join(fileWorkPath,fileNameWithExt);
+                        if(!fs.existsSync(srcFilePath)) {
+                            callback("invalid_req_param",JSON.stringify({'MsgType':comStr.MsgType.kCheckFileExist,'ErrorCode':-2}));
+                            return;
+                        }
+                        callback("ok",JSON.stringify({'MsgType':comStr.MsgType.kCheckFileExist,'ErrorCode':0}));
                         break;
                     default:
                         callback("ok",JSON.stringify({'MsgType':comStr.MsgType.kInit,'ErrorCode':-1,'ErrorMsg':'msgType invalid'}));
