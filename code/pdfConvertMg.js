@@ -189,11 +189,15 @@ module.exports = xx = function() {
             var loadObj = comFunc.loadIni(iniPath);
             var Info = loadObj['progress'];
             var prg = Info['progress'];
+            var msg = Info['message'];
             //console.log(prg);
-            return prg.toString();            
+            var arrayItem = [];
+            arrayItem.push(prg);
+            arrayItem.push(msg);
+            return arrayItem;            
         } catch (error) {
             console.log(error);
-            return 0;
+            return null;
         }
     }
 
@@ -286,6 +290,12 @@ module.exports = xx = function() {
     
                             var fileNameWithExt = fileMD5 + '.' + GetFileExt(jsonTxt['FromFileType']);
                             var srcFilePath = path.join(fileWorkPath,fileNameWithExt);
+                            if(!fs.existsSync(srcFilePath)) {
+                                var resTestJson = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-1};
+                                callback("invalid_req_param",JSON.stringify(resTestJson));
+                                return
+                            }
+
                             /// 转换结果输出目录
                             var outputFilePath = GetTaskOutputDir(fileMD5);
                             if(fs.existsSync(outputFilePath)) {
@@ -302,19 +312,48 @@ module.exports = xx = function() {
                             var dstFileExt = GetFileExt(jsonTxt['ToFileType']);
                             /// 原文件密码
                             var filePwd = jsonTxt['Pwd'];
-                            var cmdJSON = [pathMD5, taskType, srcFilePath, outputFilePath, progressIniPath, pageRange==undefined?'':pageRange, dstFileExt,filePwd==undefined?'':filePwd];
-    
-                            ExcuteCmd(pdfConsoleExe, comStr.MsgType.kStartConvert, fileMD5, cmdJSON,function(err){
-                                if(err != undefined && err!=""){
-                                    var resJON = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-1};
-                                    console.log(resJON);
-                                    //callback("fail",JSON.stringify(resJON));
-                                    //hasErr = 1;
-                                }
-                            });
-                            
-                            var resTestJson = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':0};
-                            callback("ok",JSON.stringify(resTestJson));                            
+
+                            ///转换命令
+                            var cmdConvertJSON = [pathMD5, taskType, srcFilePath, outputFilePath, progressIniPath, pageRange==undefined?'':pageRange, dstFileExt,filePwd==undefined?'':filePwd];
+
+                            if (filePwd != undefined && filePwd != "") {
+                                var fileNameDecryptWithExt = 'decrypt_' +fileMD5 + '.' + GetFileExt(jsonTxt['FromFileType']);
+                                var outputFilePathDecrypt = path.join(fileWorkPath,fileNameDecryptWithExt);                                
+                                var cmdJSON = ["--decrypt", "--password="+filePwd, srcFilePath, outputFilePathDecrypt];    
+
+                                ExcuteCmd(pdfTool, comStr.MsgType.kVerifyPassword, fileMD5, cmdJSON,function(err){
+                                    var passwordCheckOK = 1;
+                                    if(err != undefined && err!=""){
+                                        if(err.indexOf("invalid password") != -1){
+                                        var resJON = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-2};
+                                        console.log(resJON);
+                                        callback("fail",JSON.stringify(resJON));
+                                        passwordCheckOK = 0;
+                                        return;
+                                        }
+                                    }
+
+                                    if(passwordCheckOK == 1) {
+                                        ExcuteCmd(pdfConsoleExe, comStr.MsgType.kStartConvert, fileMD5, cmdConvertJSON,function(err){
+                                            if(err != undefined && err!=""){
+                                                var resJON = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-3};
+                                            }
+                                        });
+                                        
+                                        var resTestJson = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':0};
+                                        callback("ok",JSON.stringify(resTestJson));
+                                    }
+                                });
+                            } else {
+                                ExcuteCmd(pdfConsoleExe, comStr.MsgType.kStartConvert, fileMD5, cmdConvertJSON,function(err){
+                                    if(err != undefined && err!=""){
+                                        var resJON = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-3};
+                                    }
+                                });
+                                
+                                var resTestJson = {'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':0};
+                                callback("ok",JSON.stringify(resTestJson)); 
+                            }                   
                             
                         } else {
                             callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kStartConvert,'ErrorCode':-1}));
@@ -323,10 +362,17 @@ module.exports = xx = function() {
                     case comStr.MsgType.kHeartBeat:
                         /// 读取MD5的文件相应的ini解析其中progress并返回给客户端
                         if(fileMD5 != undefined) {
-                            var progressIniPath = GetTaskIniProgress(fileMD5);
-                            var progress = GetProgress(progressIniPath);
-                            //console.log(process);
                             var convertDone = 0;
+                            var progressIniPath = GetTaskIniProgress(fileMD5);
+                            var arrayIni = GetProgress(progressIniPath);
+                            var errMessge = arrayIni.pop();
+                            var progress = arrayIni.pop();
+                            if (errMessge != undefined && errMessage != "") {
+                                var resJson = {'MsgType':comStr.MsgType.kHeartBeat,'FileMD5':fileMD5,'Progress':-1,'ConvertDone':convertDone,'errMsg':errMessge};
+                                callback("ok",JSON.stringify(resJson));
+                                return;
+                            }
+                               
                             if( Number(progress) == 100) {
                                 if(taskMap.has(fileMD5)) {                                    
                                     taskMap.delete(fileMD5);
@@ -395,8 +441,11 @@ module.exports = xx = function() {
 
                         var fileNameDecryptWithExt = 'decrypt_' +fileMD5 + '.' + GetFileExt(jsonTxt['FromFileType']);
                         var outputFilePath = path.join(fileWorkPath,fileNameDecryptWithExt);
-                        var cmdJSON = ["--decrypt", "--password="+password, srcFilePath, outputFilePath];
-    
+                        if(fs.existsSync(outputFilePath)) {
+                            fs.unlinkSync(outputFilePath);
+                        }
+
+                        var cmdJSON = ["--decrypt", "--password="+password, srcFilePath, outputFilePath];    
                         ExcuteCmd(pdfTool, comStr.MsgType.kVerifyPassword, fileMD5, cmdJSON,function(err){
                             var hasCallBack = 0;
                             if(err != undefined && err!=""){
