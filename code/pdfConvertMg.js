@@ -110,7 +110,7 @@ module.exports = xx = function() {
                 return "file2img";
             }
     
-            if (toType ==comStr.FileType.kXls || toType == comStr.FileType.kXlsx)
+            if (toType ==comStr.FileType.kHtml)
             {
                 return "file2html";
             }
@@ -301,6 +301,8 @@ module.exports = xx = function() {
                             if(fs.existsSync(outputFilePath)) {
                                 comFunc.deleteFolderRecursive(outputFilePath);
                             }
+                            fs.mkdirSync(outputFilePath);
+
                             /// 转换过程ini文件，其记录了进度
                             var progressIniPath = GetTaskIniProgress(fileMD5);
                             if(fs.existsSync(progressIniPath)) {
