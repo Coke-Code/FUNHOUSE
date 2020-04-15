@@ -417,8 +417,13 @@ module.exports = xx = function() {
                         if (fs.existsSync(outputDir)) {
                             var fileList = [];
                             var tmpFileList = comFunc.readFileList(outputDir,fileList,outputDir);
-                            var resJson = {'MsgType':comStr.MsgType.kGetFileUrl,'FileMD5':fileMD5.toString(),'DownloadURL':fileList};
-                            console.log(resJson);
+                            var errorCode = 0;
+                            var resJson = {'MsgType':comStr.MsgType.kGetFileUrl,'FileMD5':fileMD5.toString(),'ErrorCode':errorCode,'DownloadURL':fileList};
+                            if(fileList.length == 0) {
+                                errorCode = -2;
+                                resJson = {'MsgType':comStr.MsgType.kGetFileUrl,'ErrorCode':errorCode};
+                            }
+                            //console.log(resJson);
                             callback("ok",JSON.stringify(resJson));
                         } else {
                             callback('invalid_req_param',JSON.stringify({'MsgType':comStr.MsgType.kGetFileUrl,'ErrorCode':-1}))
