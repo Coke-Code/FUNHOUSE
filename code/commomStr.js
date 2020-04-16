@@ -30,7 +30,7 @@ const commStr =
         kHtml:'html',
         kPng:'png',
         kJpg:'jpg',
-        kgif:'gif',
+        kGif:'gif',
         kBmp:'bmp',
         kTif:'tif',
         kTxt:'txt',
