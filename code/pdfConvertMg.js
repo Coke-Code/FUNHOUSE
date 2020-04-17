@@ -199,7 +199,7 @@ module.exports = xx = function () {
         return 0;
     }
 
-    function IsPhoto(toFileType) {
+    function IsPhoto(toType) {
         if (toType == comStr.FileType.kPng || toType == comStr.FileType.kJpg ||
             toType == comStr.FileType.kBmp || toType == comStr.FileType.kTif ||
             toType == comStr.FileType.kGif) {
