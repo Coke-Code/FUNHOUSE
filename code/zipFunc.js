@@ -42,7 +42,7 @@ module.exports = zipFunc = function () {
             } 
 
             if (callBack != undefined && callBack != null) {
-                callBack(callBackRet,outputFile);
+                callBack(callBackRet,outputZipName + '.zip');
             }
         });
     }
