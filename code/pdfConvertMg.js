@@ -467,9 +467,9 @@ module.exports = xx = function () {
                     case comStr.MsgType.kGetFileUrl:
                         var outputDir = GetTaskOutputDir(fileMD5);
                         var errorCode = 0;
-                        if (fs.existsSync(outputDir)) {
+                        if (fs.existsSync(outputDir) ) {
                             var fileList = [];
-                            if (IsPhoto(jsonTxt['ToFileType'])) {
+                            if (ParameterValid(jsonTxt['ToFileType']) == 1 && IsPhoto(jsonTxt['ToFileType'])){
                                 zipFunc.startZIP(outputDir, fileMD5, function (ret, outputFilePath) {
                                     if (ParameterValid(ret) == 1 && ret == 1 && ParameterValid(outputFilePath) == 1) {
 
