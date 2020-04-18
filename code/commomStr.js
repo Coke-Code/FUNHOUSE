@@ -12,7 +12,7 @@ const commStr =
         kHtml:7,
         kPng:8,
         kJpg:9,
-        kgif:10,
+        kGif:10,
         kBmp:11,
         kTif:12,
         kTxt:13,

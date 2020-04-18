@@ -75,7 +75,6 @@ app.get('/IMyFoneGateway/PDFConvert/upload', function(req, res) {
   });
 });
 
-
 app.get('/IMyFoneGateway/PDFConvert/download',function(req, res, next){
   let identify = req.query.identify
   let filename = req.query.filename
@@ -85,28 +84,44 @@ app.get('/IMyFoneGateway/PDFConvert/download',function(req, res, next){
     res.end();
   } else {
     let currFile = `${__dirname}/UserFileCacheDir/${identify}/output/${filename}`
-    let fileName = '208ef23bf2d9d22fa21aa77594575cca.docx'
     console.log(currFile)
-    fs.exists(currFile,function(exist) {
-        if(exist){
-          let stat = fs.statSync(currFile)
-          res.set({
-            "Content-type":"application/octet-stream",
-            "Content-Disposition":"attachment;filename="+encodeURI(fileName),
-            "Content-length" : stat.size
-          });
-          fReadStream = fs.createReadStream(currFile);
-          fReadStream.on("data",function(chunk){res.write(chunk,"binary")});
-          fReadStream.on("end",function () {
-              res.end();
-          });
-        }else{
-          res.set("Content-type","text/html");
-          res.send("error");
+    if (fs.existsSync(currFile)){
+      let stat = fs.statSync(currFile)
+      res.set({
+        "Content-type":"application/octet-stream",
+        "Content-Disposition":"attachment;filename="+encodeURI(filename),
+        "Content-length" : stat.size
+      });
+      fReadStream = fs.createReadStream(currFile);
+      fReadStream.on("data",function(chunk){res.write(chunk,"binary")});
+      fReadStream.on("end",function () {
           res.end();
-        }
-    });
+      });
+    }else{
+      res.set("Content-type","text/html");
+      res.send("error");
+      res.end();
+    }
+
+    // fs.exists(currFile,function(exist) {
+    //     if(exist){
+    //       let stat = fs.statSync(currFile)
+    //       res.set({
+    //         "Content-type":"application/octet-stream",
+    //         "Content-Disposition":"attachment;filename="+encodeURI(filename),
+    //         "Content-length" : stat.size
+    //       });
+    //       fReadStream = fs.createReadStream(currFile);
+    //       fReadStream.on("data",function(chunk){res.write(chunk,"binary")});
+    //       fReadStream.on("end",function () {
+    //           res.end();
+    //       });
+    //     }else{
+    //       res.set("Content-type","text/html");
+    //       res.send("error");
+    //       res.end();
+    //     }
+    // });
   }
 });
-
 app.listen(34565);
