@@ -98,8 +98,7 @@ module.exports = flow = function(uploadtmpdir,uploadmd5path) {
       readStream.pipe(WStream, {end:false})
       readStream.on("end", function() {
         WStream.end()
-        let stat = fs.statSync(source[start])
-        if(stat.isFile()) {
+        if(fs.existsSync(source[start])) {
           fs.unlinkSync(source[start])
         }
         if(++start >= total) {
@@ -124,6 +123,7 @@ module.exports = flow = function(uploadtmpdir,uploadmd5path) {
       this.fileList[identifier] = {}
       this.fileList[identifier].uploadPieces = []
     }
+    console.log(this.fileList[identifier].uploadPieces.length)
     if (validateRequest(chunkNumber, chunkSize, totalSize, identifier, filename) == 'valid') {
       var chunkFilename = getChunkFilename(chunkNumber, identifier);
       fs.exists(chunkFilename, function(exists) {
@@ -154,6 +154,31 @@ module.exports = flow = function(uploadtmpdir,uploadmd5path) {
       callback('not_found', null, null, null);
     }
   };
+
+  $.clearupload = function(req, callback) {
+    console.log('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    var postData = '';
+    let self = this
+    req.on('data', function (chuck) {
+        postData += chuck;
+    })
+    req.on('end', function () {
+      console.log(postData);
+      var jsonTxt = JSON.parse(postData);
+      let identifier = jsonTxt['identifier']
+      console.log(identifier)
+      if(self.fileList[identifier] !== undefined) {
+        for(let i = 0;i < self.fileList[identifier].uploadPieces.length;i++) {
+          if(fs.existsSync(self.fileList[identifier].uploadPieces[i].chunkFilename)) {
+            fs.unlinkSync(self.fileList[identifier].uploadPieces[i].chunkFilename)
+          }
+        }
+        self.fileList[identifier] = {}
+        self.fileList[identifier].uploadPieces = []
+      }
+      callback()
+    })
+  }
 
   //'partly_done', filename, original_filename, identifier
   //'done', filename, original_filename, identifier

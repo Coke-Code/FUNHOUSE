@@ -75,6 +75,12 @@ app.get('/IMyFoneGateway/PDFConvert/upload', function(req, res) {
   });
 });
 
+app.post('/IMyFoneGateway/PDFConvert/clearupload',function(req, res, next){
+  uploader.clearupload(req, function() {
+    res.status(200).send('ok')
+  })
+})
+
 app.get('/IMyFoneGateway/PDFConvert/download',function(req, res, next){
   let identify = req.query.identify
   let filename = req.query.filename
@@ -102,26 +108,6 @@ app.get('/IMyFoneGateway/PDFConvert/download',function(req, res, next){
       res.send("error");
       res.end();
     }
-
-    // fs.exists(currFile,function(exist) {
-    //     if(exist){
-    //       let stat = fs.statSync(currFile)
-    //       res.set({
-    //         "Content-type":"application/octet-stream",
-    //         "Content-Disposition":"attachment;filename="+encodeURI(filename),
-    //         "Content-length" : stat.size
-    //       });
-    //       fReadStream = fs.createReadStream(currFile);
-    //       fReadStream.on("data",function(chunk){res.write(chunk,"binary")});
-    //       fReadStream.on("end",function () {
-    //           res.end();
-    //       });
-    //     }else{
-    //       res.set("Content-type","text/html");
-    //       res.send("error");
-    //       res.end();
-    //     }
-    // });
   }
 });
 app.listen(34565);
