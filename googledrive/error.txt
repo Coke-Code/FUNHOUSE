@@ -1,0 +1,20 @@
+
+C:\Users\Administrator\Desktop\googledrive\FUNHOUSE\googledrive>node .
+Files:
+(node:4832) UnhandledPromiseRejectionWarning: Error: The user has not granted th
+e app 546152919506 read access to the file 1T30VrU-48h8xEiE-ElLU_O9sGbLPLRHD.
+    at Gaxios._request (C:\Users\Administrator\Desktop\googledrive\FUNHOUSE\goog
+ledrive\node_modules\gaxios\build\src\gaxios.js:89:23)
+    at processTicksAndRejections (internal/process/task_queues.js:89:5)
+    at async OAuth2Client.requestAsync (C:\Users\Administrator\Desktop\googledri
+ve\FUNHOUSE\googledrive\node_modules\google-auth-library\build\src\auth\oauth2cl
+ient.js:343:18)
+(node:4832) UnhandledPromiseRejectionWarning: Unhandled promise rejection. This
+error originated either by throwing inside of an async function without a catch
+block, or by rejecting a promise which was not handled with .catch(). (rejection
+ id: 1)
+(node:4832) [DEP0018] DeprecationWarning: Unhandled promise rejections are depre
+cated. In the future, promise rejections that are not handled will terminate the
+ Node.js process with a non-zero exit code.
+
+C:\Users\Administrator\Desktop\googledrive\FUNHOUSE\googledrive>
