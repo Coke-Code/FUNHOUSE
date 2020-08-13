@@ -10,7 +10,11 @@ const fs = require('fs')
 
 // Configure access control allow origin header stuff
 var ACCESS_CONTROLL_ALLOW_ORIGIN = true;
-
+app.all('*', function (req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
 // Host most stuff in the public folder
 app.use(express.static(__dirname + '/public'));
 
